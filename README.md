@@ -6,7 +6,7 @@ Learning Level Set Method by Echo State Networkfor Image Segmentation
 ### Introduction
 
 
-<img src='data/figures/WEIZMANN_1_sample_images.png.png' width='100%'>
+<img src='data/figures/10_1_sample_images.png' width='100%'>
 
 ### Notes
 
