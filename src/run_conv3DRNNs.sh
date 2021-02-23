@@ -6,14 +6,14 @@
 # /usr/bin/python trainUNET.py
 for dataset in 'BSR' 'WEIZMANN' 'CIFAR_10' 'CIFAR_100'
 do
-    for h1 in 256 ;
+    for rnn_unit in 'LSTM' 'GRU' 'RNN';
     do 
-        for h2 in 256 ;
+        for h in 128 256 512 1024;
         do
-            for dp in 0 :
+            for nlyrs in 1 2 3 :
             do 
-                python main_conv3D.py 
-                --run-name=${dataset}-conv3d_h1-${hs}_h2-${h2}_dp-${dp}  \
+                python main_conv3DRNNs.py 
+                --run-name=${dataset}-conv3d${rnn_unit}_h-${h}_nlyrs-$nlyrs  \
                 --data-path=F:/MSC/Data/processed_data/${dataset} \
                 --save-path=F:/MSC/Data/processed_data/${dataset}/results \
                 --num-epochs=500 \
@@ -27,10 +27,10 @@ do
                 --in-channels=1  \
                 --sample-size=128  \
                 --sample-duration=16\
-                --hidden-one=$h2 \
-                --hidden-two=$h2  \
-                --dropout-prob=$dp
-        done
+                ----rnn-unit=$rnn_unit \
+                --hidden=$h  \
+                --num-layers=$nlyrs
+            done
         done
     done
 done

@@ -11,7 +11,7 @@ sys.path.insert(0,currentdir)
 from Attention import LSTMAttentionBlock
 
 """
-Implementation of CNN+LSTM.
+Implementation of CNN+RNN/LSTM/GRU.
 """
 class CRNN(nn.Module):
     def __init__(self, in_channels=3, sample_size=256, sample_duration=16, num_classes=100,
@@ -68,6 +68,7 @@ class CRNN(nn.Module):
             self.lstm = nn.LSTM(
             input_size=self.input_size,
             hidden_size=self.hidden_size,
+            dropout= 0.5 if self.num_layers > 1 else 0,
             num_layers=self.num_layers,
             batch_first=True,
         )
@@ -75,6 +76,7 @@ class CRNN(nn.Module):
             self.lstm = nn.GRU(
             input_size=self.input_size,
             hidden_size=self.hidden_size,
+            dropout= 0.5 if self.num_layers > 1 else 0,
             num_layers=self.num_layers,
             batch_first=True,
         )
@@ -82,6 +84,7 @@ class CRNN(nn.Module):
             self.lstm = nn.RNN(
             input_size=self.input_size,
             hidden_size=self.hidden_size,
+            dropout= 0.5 if self.num_layers > 1 else 0,
             num_layers=self.num_layers,
             batch_first=True,
         )
