@@ -129,7 +129,7 @@ class LevelSetDataset(Dataset):
         y = self._create_binary_mask(y)
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
                                           
-        X = torch.stack(X, dim=0)
+        X = torch.stack(X, dim=1)
         
         return X, y, name
 
