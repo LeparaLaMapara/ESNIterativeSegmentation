@@ -1,0 +1,37 @@
+function Readimages(action, method)
+
+if action =='train'
+%     path_destination = 'F:\MSC\Data\SEGMENTATION_DATA\BINARY_SEGMENTATION\TRAIN\';
+%     path_input       = '\F:\MSC\Data\TRAIN\';    
+    path_destination = '/media/lukhetho/New Volume/MSC/Data/SEGMENTATION_DATA/BINARY_SEGMENTATION/TRAIN/';
+    path_input       = '/media/lukhetho/New Volume/MSC/Data/TRAIN/';
+    
+    
+    
+    
+    
+
+else 
+%     path_destination = 'F:\MSC\Data\SEGMENTATION_DATA\BINARY_SEGMENTATION\TEST\';
+%     path_input       = 'F:\MSC\Data\TEST\';
+    
+    path_destination = '/media/lukhetho/New Volume/MSC/Data/SEGMENTATION_DATA/BINARY_SEGMENTATION/TEST/';
+    path_input       = '/media/lukhetho/New Volume/MSC/Data/TEST/';
+    
+    
+
+end    
+    
+
+files = dir (strcat(path_input,'*.jpg'))
+%files = strcat(path_input,'*.jpg');
+L = length (files); % number of original images
+for i=1:L
+
+   image_name = strcat(path_input,string(i),'.jpg');
+   disp(image_name)
+   seg = chenvese(image_name, path_destination,'whole+small', 100, 0.025, method);
+  
+end
+
+
