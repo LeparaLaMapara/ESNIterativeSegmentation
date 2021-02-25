@@ -32,6 +32,7 @@ for data = 1:length(datasets)
     ds = datasets{data};
     path_destination = strcat('F:\MSC\Data\processed_data\',ds,'\labels\');
     path_input       = strcat('F:\MSC\Data\processed_data\', ds,'\images\');   
+    
 
 %     display(ds)
     if strcmpi('WEIZMANN',ds)
