@@ -1,10 +1,5 @@
 #!/bin/bash
-# SBATCH --job-name=UnetTrain
-# SBATCH --node -N2 -p biggpu
-# SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/result.txt
-# cd /home-mscluster/tmashinini/MSC/Code/Python/
-# /usr/bin/python trainUNET.py
-for dataset in 'BSR' 'WEIZMANN' 'CIFAR_10' 'CIFAR_100'
+for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' 
 do
     for h1 in 256 ;
     do 
@@ -12,7 +7,15 @@ do
         do
             for dp in 0 :
             do 
-                python main_conv3D.py 
+
+                #SBATCH --job-name=test_${dataset}_${h}_${h1}_${h2}_${dp}_conv3D.txt
+                #SBATCH --nodes=10
+                #SBATCH --gpus-per-node=1
+                #SBATCH --mem=16
+                #SBATCH -p batch
+                #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${h1}_${h2}_${dp}_conv3D.txt
+                cd ~/tmashinini/MSC/Code/Python/
+                "python main_conv3D.py 
                 --run-name=${dataset}-conv3d_h1-${hs}_h2-${h2}_dp-${dp}  \
                 --data-path=F:/MSC/Data/processed_data/${dataset} \
                 --save-path=F:/MSC/Data/processed_data/${dataset}/results \
@@ -30,6 +33,7 @@ do
                 --hidden-one=$h2 \
                 --hidden-two=$h2  \
                 --dropout-prob=$dp
+                "
         done
         done
     done

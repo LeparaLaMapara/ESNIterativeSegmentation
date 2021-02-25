@@ -1,10 +1,5 @@
 #!/bin/bash
-# SBATCH --job-name=UnetTrain
-# SBATCH --node -N2 -p biggpu
-# SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/result.txt
-# cd /home-mscluster/tmashinini/MSC/Code/Python/
-# /usr/bin/python trainUNET.py
-for dataset in 'BSR' 'WEIZMANN' 'CIFAR_10' 'CIFAR_100'
+for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' 
 do
     for rnn_unit in 'LSTM' 'GRU' 'RNN';
     do 
@@ -12,7 +7,14 @@ do
         do
             for nlyrs in 1 2 3 :
             do 
-                python main_conv3DRNNs.py 
+
+                #SBATCH --job-name=test_${dataset}_${h}_${rnn_unit}_${nlyrs}_conv${rnn_unit}.txt
+                #SBATCH --nodes=10
+                #SBATCH --gpus-per-node=1
+                #SBATCH --mem=16
+                #SBATCH -p batch
+                #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${rnn_unit}_${nlyrs}_conv${rnn_unit}.txt
+                "python main_conv3DRNNs.py 
                 --run-name=${dataset}-conv3d${rnn_unit}_h-${h}_nlyrs-$nlyrs  \
                 --data-path=F:/MSC/Data/processed_data/${dataset} \
                 --save-path=F:/MSC/Data/processed_data/${dataset}/results \
@@ -30,6 +32,7 @@ do
                 ----rnn-unit=$rnn_unit \
                 --hidden=$h  \
                 --num-layers=$nlyrs
+                "
             done
         done
     done

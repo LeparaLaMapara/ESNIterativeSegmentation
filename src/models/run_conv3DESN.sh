@@ -9,10 +9,12 @@ do
             do 
                 for spar in 1 0.5 0.9:
                 do
-                    #SBATCH --job-name=test_${datase}_${h}_${lkr}_${spt}_${spar}_convESN.txt
+                    #SBATCH --job-name=test_${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
                     #SBATCH --nodes=10
+                    #SBATCH --gpus-per-node=1
+                    #SBATCH --mem=16
                     #SBATCH -p batch
-                    #SBATCH --output=~/tmashinini/MSC/Code/Python/${datase}_${h}_${lkr}_${spt}_${spar}_convESN.txt
+                    #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
                     cd ~/tmashinini/MSC/Code/Python/
                     "
                     source activate msc; \
@@ -34,7 +36,8 @@ do
                     --hidden=$h \
                     --leaking-rate=$lkr\
                     --spectral-radius=$spt\
-                    --sparsity=$spar"
+                    --sparsity=$spar
+                    "
                 done
             done
         done
