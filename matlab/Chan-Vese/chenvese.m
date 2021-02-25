@@ -201,14 +201,13 @@ switch lower(method)
               indicator = checkstop(old,new,dt);
               seg = phi0<=0; 
               
-              namesdir = split(imagename,'\');
+              namesdir = split(imagename,'/');
               namesdir =  namesdir(end);
               names = split(namesdir,'.');
               names = names(1,:);
               names = string(names(1,:)) + '_';
               filename  = strcat(path_destination, names, num2str(n), '.jpg');
               imwrite(seg, filename);
-
               disp(filename)
               % intermediate output
 %               if(mod(n,20) == 0) 
