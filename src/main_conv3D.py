@@ -81,10 +81,10 @@ if __name__=="__main__":
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
-    # try:
-    #     os.remove(os.path.join(checkpoints_path, "*.pt.*"))
-    # except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
-    #     pass
+    try:
+        os.remove(os.path.join(checkpoints_path, "*.pt.*"))
+    except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
+        pass
 
     # log all parameters
     logger.info("Commnad-line arguments")
@@ -106,8 +106,8 @@ if __name__=="__main__":
         training_mode='train'
         )
 
-    ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=2)
-    ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=2)
+    ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
 
     # define model
     logger.info("Creating model......")
@@ -129,7 +129,7 @@ if __name__=="__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # learning rate schedular
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/3), gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
 
     # loss function
     loss_function = weighted_binary_cross_entropy

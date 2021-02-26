@@ -62,7 +62,6 @@ if __name__=="__main__":
     parser.add_argument("--spectral-radius", type=float, default=0.9, help="Scaling of reservoir matrix [0.9]")
     parser.add_argument("--sparsity", type=float, default=0.2, help="Percentage of neurons with zeros in the reservoir matrix [0.2]")
 
-
     parser.add_argument("--seed", type=int, default=0, help="Seed for random number generation [0]")
 
     args = parser.parse_args()
@@ -92,10 +91,10 @@ if __name__=="__main__":
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
-    # try:
-    #     os.remove(os.path.join(checkpoints_path, "*.pt.*"))
-    # except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
-    #     pass
+    try:
+        os.remove(os.path.join(checkpoints_path, "*.pt.*"))
+    except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
+        pass
 
     # log all parameters
     logger.info("Commnad-line arguments")
@@ -144,7 +143,7 @@ if __name__=="__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
     # learning rate schedular
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/3), gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
 
     # loss function
     loss_function = weighted_binary_cross_entropy

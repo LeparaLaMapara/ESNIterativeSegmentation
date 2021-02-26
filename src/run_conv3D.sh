@@ -1,11 +1,11 @@
 #!/bin/bash
-for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' 
+for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' ;
 do
-    for h1 in 256 ;
+    for h1 in 256 512 1024 ;
     do 
-        for h2 in 256 ;
+        for h2 in 256 512 1024;
         do
-            for dp in 0 :
+            for dp in 0;
             do 
 
                 #SBATCH --job-name=test_${dataset}_${h}_${h1}_${h2}_${dp}_conv3D.txt

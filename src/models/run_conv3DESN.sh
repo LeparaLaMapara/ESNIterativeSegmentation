@@ -1,13 +1,13 @@
 #!/bin/bash
-for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' 
+for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' ;
 do
-    for h in 256 512 ;
+    for h in 256 512 1024;
     do 
-        for lkr in 0.01 0.1 ;
+        for lkr in 0.1234 0.9242 0.01324;
         do
-            for spt in 1 0.9 :
+            for spt in 0.9 0.5 1;
             do 
-                for spar in 1 0.5 0.9:
+                for spar in 1 0.5 0.9;
                 do
                     #SBATCH --job-name=test_${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
                     #SBATCH --nodes=10

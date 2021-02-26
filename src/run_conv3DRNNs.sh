@@ -1,11 +1,11 @@
 #!/bin/bash
-for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' 
+for dataset in 'CIFAR_10' 'CIFAR_100' 'BSR' 'WEIZMANN' ;
 do
     for rnn_unit in 'LSTM' 'GRU' 'RNN';
     do 
         for h in 128 256 512 1024;
         do
-            for nlyrs in 1 2 3 :
+            for nlyrs in 1 2 3 ;
             do 
 
                 #SBATCH --job-name=test_${dataset}_${h}_${rnn_unit}_${nlyrs}_conv${rnn_unit}.txt
