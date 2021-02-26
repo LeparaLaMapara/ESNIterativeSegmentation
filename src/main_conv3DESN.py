@@ -51,7 +51,6 @@ if __name__=="__main__":
     parser.add_argument("--image-dimension", type=int, default=32, help="Dimensions to resize the images [32]")
     parser.add_argument("--threshold", type=float, default=0.5, help="Pixel cutoff to create mask [0.5]")
 
-
     parser.add_argument("--in-channels", type=int, default=3, help="Input channel for the 1st conv layer [3]")
     parser.add_argument("--hidden",  type=int, default=512, help="Number of hidden units in the 1st  fully connected layer [512]")
     parser.add_argument("--num-classes", type=int, default=1024, help="Number of pixel classes to be predicted [1024]")
@@ -82,6 +81,12 @@ if __name__=="__main__":
         args.seed = np.random.randint(0, 100)
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
+
+    # get the number of classess
+    if args.num_classes:
+        args.num_classes = args.num_classes
+    else:
+        args.num_classes = args.image_dimension*args.image_dimension
 
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
@@ -118,6 +123,7 @@ if __name__=="__main__":
 
     ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
     ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
+
 
     # define model
     logger.info("Creating model......")

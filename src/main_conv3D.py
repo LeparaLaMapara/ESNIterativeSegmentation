@@ -73,6 +73,12 @@ if __name__=="__main__":
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
 
+    # get the number of classess
+    if args.num_classes:
+        args.num_classes = args.num_classes
+    else:
+        args.num_classes = args.image_dimension*args.image_dimension
+
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
     os.makedirs(tb_log_path, exist_ok=True)
@@ -109,6 +115,9 @@ if __name__=="__main__":
     ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
     ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
 
+    # get the number of classess
+    args.num_classes = args.image_dimension*args.image_dimension
+
     # define model
     logger.info("Creating model......")
     model = CNN3D(
@@ -118,9 +127,8 @@ if __name__=="__main__":
         drop_p=args.dropout_prob, 
         hidden1=args.hidden_one,
         hidden2=args.hidden_two,
-        num_classes=args.in_channels
+        num_classes=args.num_classes
     )
-
 
     # device to perform computation (CPU or GPU)
     device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

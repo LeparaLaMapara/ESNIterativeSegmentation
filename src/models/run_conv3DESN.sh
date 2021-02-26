@@ -9,18 +9,17 @@ do
             do 
                 for spar in 1 0.5 0.9;
                 do
-                    #SBATCH --job-name=test_${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
+                    #SBATCH --job-name=test_${dataset}_${h}_${lkr}_${spt}_${spar}_conv3dESN.txt
                     #SBATCH --nodes=10
                     #SBATCH --gpus-per-node=1
                     #SBATCH --mem=16
                     #SBATCH -p batch
-                    #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
-                    cd ~/tmashinini/MSC/Code/Python/
-                    "
-                    source ~/.bashrc \
-                    conda activate msc; \
+                    #SBATCH --output=~/MSC/Code/Python/${dataset}_${h}_${lkr}_${spt}_${spar}_conv3dESN.txt
+                    cd ~/MSC/Code/Python/
+                    source ~/.bashrc 
+                    conda activate msc
                     python3 main_conv3DESN.py \
-                    --run-name=${dataset}-conv3dESN_h-${hs}_lkr-${lkr}_spt-${spt}_spar-${spar}  \
+                    --run-name=${dataset}-conv3dESN_h-${h}_lkr-${lkr}_spec-${spt}_spars-${spar}  \
                     --data-path=~/MSC/Data/processed_data/${dataset} \
                     --save-path=~/MSC/Data/processed_data/${dataset}/results \
                     --num-epochs=500 \
@@ -35,10 +34,9 @@ do
                     --sample-size=128  \
                     --sample-duration=16\
                     --hidden=$h \
-                    --leaking-rate=$lkr\
+                    --leaking-rate=$lkr \
                     --spectral-radius=$spt\
                     --sparsity=$spar
-                    "
                 done
             done
         done
