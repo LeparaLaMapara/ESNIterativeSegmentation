@@ -17,7 +17,8 @@ do
                     #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${lkr}_${spt}_${spar}_convESN.txt
                     cd ~/tmashinini/MSC/Code/Python/
                     "
-                    source activate msc; \
+                    source ~/.bashrc \
+                    conda activate msc; \
                     python3 main_conv3DESN.py \
                     --run-name=${dataset}-conv3dESN_h-${hs}_lkr-${lkr}_spt-${spt}_spar-${spar}  \
                     --data-path=~/MSC/Data/processed_data/${dataset} \

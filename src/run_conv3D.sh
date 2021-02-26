@@ -15,7 +15,10 @@ do
                 #SBATCH -p batch
                 #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${h1}_${h2}_${dp}_conv3D.txt
                 cd ~/tmashinini/MSC/Code/Python/
-                "python main_conv3D.py 
+                "
+                source ~/.bashrc \
+                conda activate msc; \
+                python main_conv3D.py 
                 --run-name=${dataset}-conv3d_h1-${hs}_h2-${h2}_dp-${dp}  \
                 --data-path=F:/MSC/Data/processed_data/${dataset} \
                 --save-path=F:/MSC/Data/processed_data/${dataset}/results \

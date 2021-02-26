@@ -14,7 +14,10 @@ do
                 #SBATCH --mem=16
                 #SBATCH -p batch
                 #SBATCH --output=~/tmashinini/MSC/Code/Python/${dataset}_${h}_${rnn_unit}_${nlyrs}_conv${rnn_unit}.txt
-                "python main_conv3DRNNs.py 
+                "
+                source ~/.bashrc \
+                conda activate msc; \
+                python main_conv3DRNNs.py 
                 --run-name=${dataset}-conv3d${rnn_unit}_h-${h}_nlyrs-$nlyrs  \
                 --data-path=F:/MSC/Data/processed_data/${dataset} \
                 --save-path=F:/MSC/Data/processed_data/${dataset}/results \
