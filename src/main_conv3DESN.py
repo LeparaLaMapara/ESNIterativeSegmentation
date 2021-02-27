@@ -98,7 +98,7 @@ if __name__=="__main__":
     os.makedirs(checkpoints_path, exist_ok=True)
     try:
         os.remove(os.path.join(checkpoints_path, "*.pt.*"))
-    except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
+    except FileNotFoundError:
         pass
 
     # log all parameters

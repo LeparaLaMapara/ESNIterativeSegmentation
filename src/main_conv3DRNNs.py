@@ -79,9 +79,9 @@ if __name__=="__main__":
 
     # get the number of classess
     if args.num_classes:
-        args.num_classes=args.num_classes
+        args.num_classes = args.num_classes
     else:
-        args.num_classes=args.image_dimension*args.image_dimension
+        args.num_classes = args.image_dimension*args.image_dimension
 
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
@@ -93,7 +93,7 @@ if __name__=="__main__":
     os.makedirs(checkpoints_path, exist_ok=True)
     try:
         os.remove(os.path.join(checkpoints_path, "*.pt.*"))
-    except FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT)):
+    except FileNotFoundError:
         pass
 
     # log all parameters

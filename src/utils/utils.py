@@ -90,7 +90,7 @@ class LevelSetDataset(Dataset):
     def _compute_mean(self,  fp_list):
         mean_image = torch.zeros([1, self.image_dimension, self.image_dimension])
         file_counter = 0
-        t=fp_list[0].split('/')[-1].split('\\')[0]
+        t=fp_list[0].split('/')[-1].split('/')[0]
         for fp in tqdm(fp_list, desc=f"Calculating mean image for {t}"):
             mean_image+=self._stat_norm(Image.open(fp).convert('L'))   
             file_counter += 1
@@ -100,7 +100,7 @@ class LevelSetDataset(Dataset):
     def _compute_stddev(self, fp_list):
         stddev_image = torch.zeros([1, self.image_dimension, self.image_dimension])
         file_counter = 0
-        t=fp_list[0].split('/')[-1].split('\\')[0]
+        t=fp_list[0].split('/')[-1].split('/')[0]
         for fp in tqdm(fp_list, desc=f"Calculating stddev image for {t}"):
             stddev_image += (self._stat_norm(Image.open(fp).convert('L')) - self.mean_image)**2
             file_counter += 1
