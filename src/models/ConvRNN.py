@@ -205,7 +205,7 @@ class ResCRNN(nn.Module):
         # LSTM
         hidden=None
         # use faster code paths
-        self.lstm.flatten_parameters()
+        # self.lstm.flatten_parameters()
         out, hidden = self.lstm(cnn_embed_seq, hidden)
         # MLP
         if self.attention:

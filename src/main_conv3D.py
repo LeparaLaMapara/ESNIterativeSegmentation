@@ -223,8 +223,7 @@ if __name__=="__main__":
 
                     # forward-propogation
                     outputs = model(inputs) 
-
-
+                    
                     outputs = outputs.view(-1, args.image_dimension, args.image_dimension)
                     labels = labels.view(-1, args.image_dimension, args.image_dimension)
 
