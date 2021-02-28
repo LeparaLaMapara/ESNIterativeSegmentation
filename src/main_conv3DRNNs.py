@@ -300,7 +300,7 @@ if __name__=="__main__":
     ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=False, pin_memory=True, num_workers=4)
 
     logger.info(f"Loading model from best validation epoch.....")
-    model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epochpoch:04d}.pt")))
+    model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epoch:04d}.pt")))
 
 
     model.eval()

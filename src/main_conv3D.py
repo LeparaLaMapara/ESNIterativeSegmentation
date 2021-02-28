@@ -1,3 +1,6 @@
+from __future__ import print_function
+from __future__ import division
+
 import torch
 import numpy as np
 import pandas as pd
@@ -6,6 +9,7 @@ import argparse
 import logging    
 from utils.logger import get_logger
 from tqdm import tqdm
+from glob import glob
 
 from torch.utils import tensorboard
 import json, os, sys
@@ -56,9 +60,9 @@ if __name__=="__main__":
 
     args = parser.parse_args()
 
-    args.save_path = os.path.abspath(args.save_path)
-    args.data_path = os.path.abspath(args.data_path)
-    run_path = os.path.join( args.save_path, args.run_name)
+    # args.save_path = os.path.abspath(args.save_path)
+    # args.data_path = os.path.abspath(args.data_path)
+    run_path = os.path.join(args.save_path, args.run_name)
     os.makedirs(run_path, exist_ok=True)
 
     # logging
@@ -74,15 +78,12 @@ if __name__=="__main__":
         torch.manual_seed(args.seed)
 
     # get the number of classess
-    if args.num_classes:
-        args.num_classes = args.num_classes
-    else:
-        args.num_classes = args.image_dimension*args.image_dimension
+    args.num_classes = args.image_dimension*args.image_dimension
 
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
     os.makedirs(tb_log_path, exist_ok=True)
-    summary_witer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
+    summary_writer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
 
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
@@ -115,8 +116,9 @@ if __name__=="__main__":
     ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
     ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
 
-    # get the number of classess
-    args.num_classes = args.image_dimension*args.image_dimension
+    # device to perform computation (CPU or GPU)
+    device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    logger.info(f"device: {device}")
 
     # define model
     logger.info("Creating model......")
@@ -128,13 +130,10 @@ if __name__=="__main__":
         hidden1=args.hidden_one,
         hidden2=args.hidden_two,
         num_classes=args.num_classes
-    )
-
-    # device to perform computation (CPU or GPU)
-    device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    ).to(device)
 
     # initliaze optimizer 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=1e-4)
 
     # learning rate schedular
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
@@ -173,32 +172,42 @@ if __name__=="__main__":
     epoch_start_time = time.time()
     best_valid_iou   = -np.inf
     best_valid_epoch = 0
-    epoch_buffer     = 10
+    epoch_buffer     = 5
     try:
-        for epoch in np.arange(args.num_epochs):
+        for epoch in np.arange(1, args.num_epochs):
+            early_stopping = EarlyStopping(name=args.run_name,patience=50, verbose=True)    
             model.train()
             for batch_idx, (inputs, labels, names) in enumerate(ls_train_ds):
 
                 # load data and move data to GPU's
                 inputs = inputs.to(device, non_blocking=True)
                 labels = labels.to(device, non_blocking=True)
+                inputs= inputs.squeeze(1)
+                labels= labels.squeeze(1)
+                # nputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
 
                 # forward-propogation
                 outputs = model(inputs)
 
+                outputs = outputs.view(-1, args.image_dimension, args.image_dimension)
+                labels = labels.view(-1, args.image_dimension, args.image_dimension)
+                # print(inputs.shape, labels.shape, outputs.shape)
+
+                # outputs = outputs.view(-1,args.in_channels, args.image_dimension, args.image_dimension)
                 loss = loss_function(labels, outputs)
 
                 # back-propagation
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step() 
-
+                
                 train_running_loss.append(loss.detach().item())
                     
                 # clear variables from memory
                 del inputs, labels, outputs 
                 torch.cuda.empty_cache()
+
+            scheduler.step() 
 
             model.eval()
             with torch.no_grad(): # do not calculate gradient and save memory usage
@@ -207,23 +216,33 @@ if __name__=="__main__":
                     # load data and move data to GPU's
                     inputs = inputs.to(device, non_blocking=True)
                     labels = labels.to(device, non_blocking=True)
+                    inputs= inputs.squeeze(1)
+                    # inputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
+
+
 
                     # forward-propogation
                     outputs = model(inputs) 
-                    loss = loss_function(labels, outputs)
+
+
+                    outputs = outputs.view(-1, args.image_dimension, args.image_dimension)
+                    labels = labels.view(-1, args.image_dimension, args.image_dimension)
+
+                    val_loss = loss_function(labels, outputs)
 
                     # compute the metrics
+                    # print(outputs.shape, labels.shape)
                     outputs = (outputs >= args.threshold)*1
-                    iou     =  iou_pytorch(outputs, labels.detach().item())
                     f1, precision, recall  = pixel_segementation_evaluation(labels.cpu().detach().numpy().reshape(-1),
                     outputs.cpu().detach().numpy().reshape(-1))
+                    iou     =  iou_pytorch(outputs, labels)
 
                     # print training/validation statistics
-                    valid_running_loss.append(val_loss)
+                    valid_running_loss.append(val_loss.detach().item())
                     valid_running_accuracy.append(f1)
                     valid_running_precision.append(precision)
                     valid_running_recall.append(recall)
-                    valid_running_dice.append(iou)
+                    valid_running_dice.append(iou.detach().item())
 
                     # clear variables from memory
                     del inputs, labels, outputs 
@@ -235,8 +254,8 @@ if __name__=="__main__":
             valid_epoch_dice.append(np.mean(valid_running_dice))
             valid_epoch_accuracy.append(np.mean(valid_running_accuracy))
             valid_epoch_precision.append(np.mean(valid_running_precision))
-            valid_epoch_recall.append(valid_running_recall)
-            epoch_list.append(epoch)
+            valid_epoch_recall.append(np.mean(valid_running_recall))
+
 
             summary_writer.add_scalar("ave_train_loss", train_epoch_loss[-1], epoch)
             summary_writer.add_scalar("ave_valid_loss", valid_epoch_loss[-1], epoch)
@@ -255,11 +274,11 @@ if __name__=="__main__":
                         os.remove(ckpt_fp)
 
                     # save weights
-                    torch.save(model.state_dict(), os.path.join(checkpoints_path, f"{args.run_name}_cp-{epoch:04d}).pt"))
+                    torch.save(model.state_dict(), os.path.join(checkpoints_path, f"{args.run_name}_cp-{epoch:04d}.pt"))
 
-            msg ='Epoch: {:04d}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, \
-            Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
-            epoch, train_epoch_loss, valid_loss,  valid_precision, valid_recall, valid_accuracy, valid_dice, scheduler.get_last_lr()[0], time.time()-epoch_start_time)
+            msg ='Epoch: {:04d}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
+            epoch, train_epoch_loss[-1], valid_epoch_loss[-1],  valid_epoch_precision[-1], valid_epoch_recall[-1], 
+            valid_epoch_accuracy[-1], valid_epoch_dice[-1], scheduler.get_last_lr()[0], time.time()-epoch_start_time)
             
             # log average lossses
             logger.info(f"{msg}")
@@ -271,9 +290,8 @@ if __name__=="__main__":
     except KeyboardInterrupt:
         logger.warning('Training stopped manually!')
 
-
     logger.info(f"Total training time: {(time.time()-epoch_start_time)/60:4.4f} minutues")
-    logger.info(f"Best Validation IOU = {best_valid_iou} (at epooch {best_valid_iou})")
+    logger.info(f"Best Validation IOU = {best_valid_iou} (at epooch {best_valid_epoch})")
 
     # save train and valid
     results_path = os.path.join(args.save_path, args.run_name, "results")
@@ -297,7 +315,7 @@ if __name__=="__main__":
     ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=False, pin_memory=True, num_workers=4)
 
     logger.info(f"Loading model from best validation epoch.....")
-    model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epochpoch:04d}.pt")))
+    model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epoch:04d}.pt")))
 
 
     model.eval()
@@ -305,22 +323,32 @@ if __name__=="__main__":
         # load data and move data to GPU's
         inputs = inputs.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
+        inputs= inputs.squeeze(1)
 
         # forward-propogation
         outputs = model(inputs) 
 
+        outputs = outputs.view(-1, args.image_dimension, args.image_dimension)
+        labels = labels.view(-1, args.image_dimension, args.image_dimension)
+
         # compute the metrics
         outputs = (outputs >= args.threshold)*1
-        iou     =  iou_pytorch(outputs, labels.detach().item())
+        iou     =  iou_pytorch(outputs, labels)
         f1, precision, recall  = pixel_segementation_evaluation(labels.cpu().detach().numpy().reshape(-1),
         outputs.cpu().detach().numpy().reshape(-1))
 
-        test_df.loc[i] = [iou, f1, precision, recall]
+        test_df.loc[batch_idx] = [iou.detach().item(), f1, precision, recall]
 
     # save test to disk
     test_df.to_csv(os.path.join(results_path,"best_test_results.csv"), index_label="step", float_format='%.4f')
 
     logger.info(f'========= DONE ========')
+
+
+
+
+
+
 
 
 

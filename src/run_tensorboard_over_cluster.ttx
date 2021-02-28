@@ -1,0 +1,4 @@
+ ssh -L 8001:localhost:8775 tmashinini@146.141.21.100 'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh /home-mscluster/tmashinini/MSC/Data/processed_data/*/results/*/tensorboard_logs/'
+
+ ssh tmashinini@146.141.21.100 -L 8001:146.141.21.164:14192  'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh'
+

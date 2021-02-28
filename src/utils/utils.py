@@ -42,7 +42,8 @@ class LevelSetDataset(Dataset):
         self.train_split         = train_split
         self.training_mode       = training_mode
         
-        
+    
+
         # get a list of input filenames as sort them (e.g. 1.png, 2.png,..,N.png)
         self.input_image_fp = sorted(glob(os.path.join(self.input_image_path , "*")), 
                                     key=lambda x: int(os.path.basename(x).split('.')[0])
@@ -65,15 +66,18 @@ class LevelSetDataset(Dataset):
         if self.training_mode=='test':
             self.ids = ids[train_idx+valid_idx:]
 
-        self.transforms= torchvision.transforms.Compose([
-                                            torchvision.transforms.Resize(size=(self.image_dimension,self.image_dimension), 
-                                                                                interpolation=Image.BILINEAR),
-                                            # torchvision.transforms.RandomHorizontalFlip(p=0.5),
-                                            # torchvision.transforms.RandomVerticalFlip(p=0.5),
-                                            torchvision.transforms.ToTensor()
-                                                                      ])
+   
         self.mean_image   =  self._compute_mean(self.input_image_fp )
         self.stddev_image = self._compute_stddev(self.input_image_fp)
+
+        self.transforms= torchvision.transforms.Compose([
+                                    torchvision.transforms.Resize(size=(self.image_dimension,self.image_dimension), 
+                                                                        interpolation=Image.BILINEAR),
+                                    # torchvision.transforms.RandomHorizontalFlip(p=0.5),
+                                    # torchvision.transforms.RandomVerticalFlip(p=0.5),
+                                    torchvision.transforms.ToTensor()
+                                    # ,torchvision.transforms.Normalize(mean=[self.mean_image], std=[self.stddev_image])
+                                                                ])
 
     def _create_binary_mask(self, x):
         x[x>=self.threshold] = 1
@@ -90,8 +94,7 @@ class LevelSetDataset(Dataset):
     def _compute_mean(self,  fp_list):
         mean_image = torch.zeros([1, self.image_dimension, self.image_dimension])
         file_counter = 0
-        t=fp_list[0].split('/')[-1].split('/')[0]
-        for fp in tqdm(fp_list, desc=f"Calculating mean image for {t}"):
+        for fp in tqdm(fp_list, desc=f"Calculating mean image for {os.path.basename(fp_list[0]).split('/')[-1].split('/')[0]}"):
             mean_image+=self._stat_norm(Image.open(fp).convert('L'))   
             file_counter += 1
         mean_image /= file_counter
@@ -100,8 +103,8 @@ class LevelSetDataset(Dataset):
     def _compute_stddev(self, fp_list):
         stddev_image = torch.zeros([1, self.image_dimension, self.image_dimension])
         file_counter = 0
-        t=fp_list[0].split('/')[-1].split('/')[0]
-        for fp in tqdm(fp_list, desc=f"Calculating stddev image for {t}"):
+        
+        for fp in tqdm(fp_list, desc=f"Calculating stddev image for {os.path.basename(fp_list[0]).split('/')[-1].split('/')[0]}"):
             stddev_image += (self._stat_norm(Image.open(fp).convert('L')) - self.mean_image)**2
             file_counter += 1
         stddev_image /= file_counter
@@ -115,14 +118,16 @@ class LevelSetDataset(Dataset):
         X, Y , names = [], [], []
         start = 1
         idx = self.ids[index]
-        x = Image.open(os.path.join(self.input_image_path, str(self.ids[index])+'.jpg')).convert('L')
-#         x  = (x-trans1(self.mean_image))/trans1(self.stddev_image )
-        x = self.transforms(x)
-        X.append(x)
+        xi = Image.open(os.path.join(self.input_image_path, str(self.ids[index])+'.jpg')).convert('L')
+        xi = self.transforms(xi)
+        # print('ms;', type(xi), type(self.mean_image))
+        xi  = (xi-self.mean_image)/(self.stddev_image )
+        # X.append(xi)
         for step_idx, step in enumerate(np.arange(1, self.num_frames, self.num_past_steps)):
             x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg'))
             x = self.transforms(x)
             x = self._create_binary_mask(x)
+            x = torch.stack([x,xi], dim=1)
             X.append(x)
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
@@ -130,10 +135,16 @@ class LevelSetDataset(Dataset):
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
                                           
         X = torch.stack(X, dim=1)
+
+        # (n, t, channel, h, w) ---> (n, channel, t, h, w)
+        X = X.permute(0,2,1,3,4)
+
+        assert len(X.shape) == 5, "Input shape is not 5 array (n, t, C, H,W)"
+        assert len(y.shape) == 3, "Output shape is not 3 array (C, H,W)"
         
         return X, y, name
 
-    def create_set(self, batch_size=32 ,shuffle=True,  pin_memory=True, num_workers=3):
+    def create_set(self, batch_size ,shuffle=True,  pin_memory=True, num_workers=4):
 
         ds = LevelSetDataset(
         input_image_path=self.input_image_path,
@@ -142,11 +153,12 @@ class LevelSetDataset(Dataset):
         num_past_steps=self.num_past_steps,
         num_future_steps=self.num_future_steps,
         image_dimension=self.image_dimension,
-         num_frames=self.num_frames ,
+        num_frames=self.num_frames ,
         valid_split= self.valid_split,     
         train_split= self.train_split,
         training_mode=self.training_mode
         )
+
         dl = torch.utils.data.DataLoader(
         ds,
         batch_size=batch_size,

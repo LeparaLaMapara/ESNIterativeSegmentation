@@ -63,37 +63,50 @@ class CNN3D(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.drop = nn.Dropout3d(p=self.drop_p)
         self.pool = nn.MaxPool3d(kernel_size=self.pool_k)
-        self.fc1 = nn.Linear(self.ch3 * self.conv3_output_shape[0] * self.conv3_output_shape[1] * self.conv3_output_shape[2], self.hidden1)
+
+        print('fc1', self.ch2 * self.conv2_output_shape[0] * self.conv2_output_shape[1] * self.conv2_output_shape[2])
+
+        # self.fc1 = nn.Linear(self.ch2 * self.conv2_output_shape[0] * self.conv2_output_shape[1] * self.conv2_output_shape[2], self.hidden1)
+        self.fc1 = nn.Linear(3648, self.hidden1)
+
+        
         self.fc2 = nn.Linear(self.hidden1, self.hidden2)
         self.fc3 = nn.Linear(self.hidden2, self.num_classes)
+        self.act = nn.Softmax(dim=1)
 
     def forward(self, x):
+        # print('x inside model', x.shape)
+        # x: (batch_size, channel, t, h, w)
         # Conv1
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        # x = self.pool(x)
-        # x = self.drop(x)
+        x = self.pool(x)
+        x = self.drop(x)
+        # print('conv1 out', x.shape)
         # Conv2
         x = self.conv2(x)
         x = self.bn2(x)
         x = self.relu(x)
-        # x = self.pool(x)
-        # x = self.drop(x)
+        x = self.pool(x)
+        x = self.drop(x)
+        # print('conv2 out', x.shape)
         # Conv3
-        x = self.conv3(x)
-        x = self.bn3(x)
-        x = self.relu(x)
+        # x = self.conv3(x)
+        # x = self.bn3(x)
+        # x = self.relu(x)
         # x = self.drop(x)
+        # print('conv3 out', x.shape)
         # MLP
         # print(x.shape)
         # x.size(0) ------ batch_size
         x = x.view(x.size(0), -1)
+        # print('reshaped', x.shape)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.dropout(x, p=self.drop_p, training=self.training)
         x = self.fc3(x)
-
+        x = self.act(x)
         return x
 
     def compute_output_shape(self, D_in, H_in, W_in, k, s, p, d):
