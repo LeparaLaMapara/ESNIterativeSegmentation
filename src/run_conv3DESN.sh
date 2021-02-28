@@ -11,7 +11,7 @@ do
             do 
                 for spl in 0.9;
                 do
-                   for nlyrs in 1 2;
+                   for nlyrs in 1;
                     do 
  
                         # SBATCH --job-name=${dataset}-conv3dESN_h-${h}_lkr-${lkr}_spy-${spy}_spl-${spl}

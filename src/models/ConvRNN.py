@@ -91,6 +91,7 @@ class CRNN(nn.Module):
 
       
         self.fc1 = nn.Linear(self.hidden_size, self.num_classes)
+        self.act = nn.Softmax(dim=1)
 
     def forward(self, x):
         # CNN
@@ -120,6 +121,7 @@ class CRNN(nn.Module):
         # MLP
         # out: (batch, seq, feature), choose the last time step
         out = self.fc1(out[:, -1, :])
+        out = self.act(out)
 
         return out
 
@@ -226,7 +228,7 @@ Implementation of CNN+ESN.
 class CESN(nn.Module):
     def __init__(self, in_channels=3, sample_size=256, sample_duration=16, num_classes=100,
                 hidden_size=512, num_layers=1, leaking_rate=0.05,spectral_radius=0.9, sparsity=0.2):
-        super(CRNN, self).__init__()
+        super(CESN, self).__init__()
         self.in_channels=in_channels
         self.sample_size = sample_size
         self.sample_duration = sample_duration
@@ -280,16 +282,17 @@ class CESN(nn.Module):
         self.lstm  =  ESN( input_size=self.input_size, 
                                         hidden_size=self.hidden_size,
                                         output_size=self.num_classes, 
-                                        num_layers=1=self.num_layers,
+                                        num_layers=self.num_layers,
                                         leaking_rate=self.leaking_rate, 
                                         spectral_radius=self.spectral_radius,
-                                        sparsity=self.sparsity,
+                                        density=self.sparsity,
                                         output_steps='last', 
                                         readout_training='inv',
                                         batch_first=True).cuda()
 
       
         # self.fc1 = nn.Linear(self.hidden_size, self.num_classes)
+        self.act = nn.Softmax(dim=1)
 
     def forward(self, x):
         # CNN
@@ -300,8 +303,8 @@ class CESN(nn.Module):
             # Conv
             out = self.conv1(x[:, :, t, :, :])
             out = self.conv2(out)
-            out = self.conv3(out)
-            out = self.conv4(out)
+            # out = self.conv3(out)
+            # out = self.conv4(out)
             # print(out.shape)
             out = out.view(out.size(0), -1)
             cnn_embed_seq.append(out)
@@ -321,6 +324,7 @@ class CESN(nn.Module):
         # MLP
         # out: (batch, seq, feature), choose the last time step
         out = self.fc1(out[:, -1, :])
+        out = self.act(out)
 
         return out
 
