@@ -89,7 +89,7 @@ if __name__=="__main__":
     checkpoints_path = os.path.join(run_path, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
     try:
-        os.remove(os.path.join(checkpoints_path, "*.pt.*"))
+        os.remove(os.path.join(checkpoints_path, "*.pt*"))
     except FileNotFoundError:
         pass
 
@@ -133,7 +133,8 @@ if __name__=="__main__":
     ).to(device)
 
     # initliaze optimizer 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=1e-4)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
     # learning rate schedular
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
@@ -184,6 +185,7 @@ if __name__=="__main__":
                 labels = labels.to(device, non_blocking=True)
                 inputs= inputs.squeeze(1)
                 labels= labels.squeeze(1)
+                # print('inputs,', inputs.shape)
                 # nputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
 
                 # forward-propogation
@@ -269,7 +271,8 @@ if __name__=="__main__":
                     best_valid_epoch = epoch
 
                     # delete previous checkpoint (s)
-                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt.*")):
+                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt*")):
+                        # print(ckpt_fp)
                         os.remove(ckpt_fp)
 
                     # save weights

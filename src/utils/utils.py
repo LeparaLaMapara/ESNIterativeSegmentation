@@ -67,7 +67,7 @@ class LevelSetDataset(Dataset):
             self.ids = ids[train_idx+valid_idx:]
 
    
-        self.mean_image   =  self._compute_mean(self.input_image_fp )
+        self.mean_image   =  self._compute_mean(self.input_image_fp)
         self.stddev_image = self._compute_stddev(self.input_image_fp)
 
         self.transforms= torchvision.transforms.Compose([
@@ -114,9 +114,11 @@ class LevelSetDataset(Dataset):
     def __len__(self):
         return len(self.ids) - (self.num_past_steps+self.num_future_steps)
 
+    def _augs(self, x, seed):
+        pass
+
     def __getitem__(self, index):
         X, Y , names = [], [], []
-        start = 1
         idx = self.ids[index]
         xi = Image.open(os.path.join(self.input_image_path, str(self.ids[index])+'.jpg')).convert('L')
         xi = self.transforms(xi)
@@ -124,10 +126,14 @@ class LevelSetDataset(Dataset):
         xi  = (xi-self.mean_image)/(self.stddev_image )
         # X.append(xi)
         for step_idx, step in enumerate(np.arange(1, self.num_frames, self.num_past_steps)):
-            x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg'))
+            x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg')).convert('L')
             x = self.transforms(x)
             x = self._create_binary_mask(x)
-            x = torch.stack([x,xi], dim=1)
+            # print('seg:', x.shape)
+            # print('ori:',  xi.shape)
+            x = torch.stack((xi,x),dim=1)
+           
+            # print('small x:', x.shape)
             X.append(x)
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
@@ -136,11 +142,14 @@ class LevelSetDataset(Dataset):
                                           
         X = torch.stack(X, dim=1)
 
-        # (n, t, channel, h, w) ---> (n, channel, t, h, w)
-        X = X.permute(0,2,1,3,4)
+        # print('big X:', X.shape)
 
-        assert len(X.shape) == 5, "Input shape is not 5 array (n, t, C, H,W)"
-        assert len(y.shape) == 3, "Output shape is not 3 array (C, H,W)"
+        # (n, t, channel, h, w) ---> (n, channel, t, h, w)
+        if len(X.shape)==5:
+            X = X.permute(0,2,1,3,4)
+
+        assert len(X.shape) == 5, "input shape is not a 5-dimensional array of (n, t, C, H, W)"
+        assert len(y.shape) == 3, "output shape is not 3-dimensional  array of (C, H, W)"
         
         return X, y, name
 

@@ -21,7 +21,7 @@ def generalised_loss(output, target, weights=0.7):
     over unionJbetween masksand corresponding predictions
     """
     binary_cross_entropy = F.binary_cross_entropy_with_logits(output, target)
-    output               = F.sigmoid(output)
+    # output               = F.sigmoid(output)
     jaccard_index        = soft_jaccard(output, target)
     loss = binary_cross_entropy * weights  -  (1 - jaccard_index) * (1 - weights)
     return loss

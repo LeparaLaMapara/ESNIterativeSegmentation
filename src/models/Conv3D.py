@@ -72,7 +72,7 @@ class CNN3D(nn.Module):
         
         self.fc2 = nn.Linear(self.hidden1, self.hidden2)
         self.fc3 = nn.Linear(self.hidden2, self.num_classes)
-        self.act = nn.Softmax(dim=1)
+        self.act = nn.Sigmoid()
 
     def forward(self, x):
         # print('x inside model', x.shape)

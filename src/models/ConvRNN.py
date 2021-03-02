@@ -91,7 +91,7 @@ class CRNN(nn.Module):
 
       
         self.fc1 = nn.Linear(self.hidden_size, self.num_classes)
-        self.act = nn.Softmax(dim=1)
+        self.act = nn.Sigmoid()
 
     def forward(self, x):
         # CNN
@@ -205,7 +205,7 @@ class ResCRNN(nn.Module):
         # LSTM
         hidden=None
         # use faster code paths
-        # self.lstm.flatten_parameters()
+        self.lstm.flatten_parameters()
         out, hidden = self.lstm(cnn_embed_seq, hidden)
         # MLP
         if self.attention:
@@ -292,7 +292,7 @@ class CESN(nn.Module):
 
       
         # self.fc1 = nn.Linear(self.hidden_size, self.num_classes)
-        self.act = nn.Softmax(dim=1)
+        self.act = nn.Sigmoid()
 
     def forward(self, x):
         # CNN
@@ -303,8 +303,8 @@ class CESN(nn.Module):
             # Conv
             out = self.conv1(x[:, :, t, :, :])
             out = self.conv2(out)
-            # out = self.conv3(out)
-            # out = self.conv4(out)
+            out = self.conv3(out)
+            out = self.conv4(out)
             # print(out.shape)
             out = out.view(out.size(0), -1)
             cnn_embed_seq.append(out)
