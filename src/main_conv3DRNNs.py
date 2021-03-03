@@ -55,7 +55,7 @@ if __name__=="__main__":
     parser.add_argument("--in-channels", type=int, default=3, help="Input channel for the 1st conv layer [3]")
     parser.add_argument("--hidden",  type=int, default=512, help="Number of hidden units in the 1st  fully connected layer [512]")
     parser.add_argument("--num-classes", type=int, default=1024, help="Number of pixel classes to be predicted [1024]")
-    parser.add_argument("--num_layers", type=int, default=1, help="Number of layers in the recurrent unit [1]")
+    parser.add_argument("--num-layers", type=int, default=1, help="Number of layers in the recurrent unit [1]")
     parser.add_argument("--sample-size", type=int, default=128 , help=" [128]")
     parser.add_argument("--sample-duration", type=int, default=16, help=" [16]")
     parser.add_argument("--rnn-unit", type=str, default='LSTM', required=True, help="Recurrent unit type [LSTM]")
@@ -82,21 +82,19 @@ if __name__=="__main__":
         torch.manual_seed(args.seed)
 
     # get the number of classess
-    if args.num_classes:
-        args.num_classes = args.num_classes
-    else:
-        args.num_classes = args.image_dimension*args.image_dimension
+    args.num_classes = args.image_dimension*args.image_dimension
 
+   
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
     os.makedirs(tb_log_path, exist_ok=True)
-    summary_witer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
+    summary_writer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
 
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
     try:
-        os.remove(os.path.join(checkpoints_path, "*.pt.*"))
+        os.remove(os.path.join(checkpoints_path, "*.pt*"))
     except FileNotFoundError:
         pass
 
@@ -123,6 +121,9 @@ if __name__=="__main__":
     ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
     ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
 
+    # device to perform computation (CPU or GPU)
+    device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    logger.info(f"device: {device}")
 
     # define model
     logger.info("Creating model......")
@@ -130,14 +131,15 @@ if __name__=="__main__":
         in_channels=args.in_channels,
         sample_size=args.sample_size,
         sample_duration=args.sample_duration,
-        drop_p=args.dropout_prob, 
         hidden_size=args.hidden,
         num_layers=args.num_layers,
         rnn_unit=args.rnn_unit,
         num_classes=args.num_classes
-    )
-                # initliaze optimizer 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=1e-4)
+    ).to(device)
+
+    # initliaze optimizer 
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
     # learning rate schedular
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)

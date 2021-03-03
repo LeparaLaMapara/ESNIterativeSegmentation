@@ -115,29 +115,38 @@ class LevelSetDataset(Dataset):
         return len(self.ids) - (self.num_past_steps+self.num_future_steps)
 
     def _augs(self, x, seed):
-        pass
+        np.random.seed(seed)
+        if np.random.random() > 0.5:
+            image = TF.hflip(x)
+        if np.random.random() > 0.5:
+            image = TF.vflip(x)
+        return x
 
     def __getitem__(self, index):
+
+        seed = np.random.randint(0, 100)
+        
         X, Y , names = [], [], []
         idx = self.ids[index]
         xi = Image.open(os.path.join(self.input_image_path, str(self.ids[index])+'.jpg')).convert('L')
         xi = self.transforms(xi)
-        # print('ms;', type(xi), type(self.mean_image))
-        xi  = (xi-self.mean_image)/(self.stddev_image )
-        # X.append(xi)
+        xi  = (xi-self.mean_image)/(self.stddev_image)
+
         for step_idx, step in enumerate(np.arange(1, self.num_frames, self.num_past_steps)):
             x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg')).convert('L')
             x = self.transforms(x)
             x = self._create_binary_mask(x)
-            # print('seg:', x.shape)
-            # print('ori:',  xi.shape)
+            if self.training_mode=='train' and len(self.ids)<1000:
+                 xi  = self._augs(xi, seed)
+                 x  = self._augs(x, seed)
             x = torch.stack((xi,x),dim=1)
-           
-            # print('small x:', x.shape)
             X.append(x)
+
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
         y = self._create_binary_mask(y)
+        if self.training_mode=='train' and len(self.ids)<1000:
+            y  = self._augs(y, seed)
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
                                           
         X = torch.stack(X, dim=1)

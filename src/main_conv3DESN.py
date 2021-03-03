@@ -83,6 +83,9 @@ if __name__=="__main__":
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
 
+    # get the number of classess
+    args.leaking_rate = 1./(args.image_dimension)
+
     
     # get the number of classess
     args.num_classes = args.image_dimension*args.image_dimension
@@ -90,13 +93,13 @@ if __name__=="__main__":
     # tensorboad logs
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
     os.makedirs(tb_log_path, exist_ok=True)
-    summary_witer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
+    summary_writer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
 
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
     try:
-        os.remove(os.path.join(checkpoints_path, "*.pt.*"))
+        os.remove(os.path.join(checkpoints_path, "*.pt*"))
     except FileNotFoundError:
         pass
 
@@ -127,7 +130,6 @@ if __name__=="__main__":
     device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     logger.info(f"device: {device}")
 
-
     # define model
     logger.info("Creating model......")
     model = CESN(
@@ -142,8 +144,9 @@ if __name__=="__main__":
         sparsity=args.sparsity
     ).to(device)
 
-     # initliaze optimizer 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=1e-4)
+    # initliaze optimizer 
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
 
     # learning rate schedular
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
@@ -228,8 +231,6 @@ if __name__=="__main__":
                     labels = labels.to(device, non_blocking=True)
                     inputs= inputs.squeeze(1)
                     # inputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
-
-
 
                     # forward-propogation
                     outputs = model(inputs) 

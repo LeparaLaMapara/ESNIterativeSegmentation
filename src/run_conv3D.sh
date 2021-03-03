@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #SBATCH --job-name=wconv-conv3d_h1-4096_h2-4096_dp0.5
 #SBATCH --nodes=4
 #SBATCH -p batch
@@ -7,6 +6,7 @@
 num_frames=80
 num_dim=64
 ch=2
+lr=0.1
 for dataset in  'WEIZMANN';
 do
     for h1 in 4096;
@@ -24,7 +24,7 @@ do
                 # cd ~/MSC/Code/Python/
                 source ~/.bashrc 
                 conda activate msc
-                python3 /home-mscluster/tmashinini/MSC/Code/Python/main_conv3D.py --seed=16 --run-name=${dataset}-conv3d_h1-${h1}_h2-${h2}_dp-${dp} --data-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset} --save-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset}/results  --num-epochs=500  --batch-size=64 --learning-rate=0.1 --num-frames=$num_frames  --num-past-step=1 --num-future-step=1 --image-dimension=$num_dim  --threshold=0.5  --in-channels=$ch  --sample-size=$num_dim  --sample-duration=$num_frames --hidden-one=$h1 --hidden-two=$h2  --dropout-prob=$dp
+                python3 /home-mscluster/tmashinini/MSC/Code/Python/main_conv3D.py --seed=16 --run-name=${dataset}-conv3d_h1-${h1}_h2-${h2}_dp-${dp} --data-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset} --save-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset}/results  --num-epochs=500  --batch-size=64 --learning-rate=$lr --num-frames=$num_frames  --num-past-step=1 --num-future-step=1 --image-dimension=$num_dim  --threshold=0.5  --in-channels=$ch  --sample-size=$num_dim  --sample-duration=$num_frames --hidden-one=$h1 --hidden-two=$h2  --dropout-prob=$dp
             done
         done
     done
