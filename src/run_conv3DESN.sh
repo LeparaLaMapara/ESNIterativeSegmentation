@@ -19,6 +19,7 @@ do
                 for spl in 0.9; # spectral radius
                 do
                    for nlyrs in 1;
+                   do
  
                         # SBATCH --job-name=${dataset}-conv3dESN_h-${h}_lkr-${lkr}_spy-${spy}_spl-${spl}
                         # SBATCH --nodes=10
