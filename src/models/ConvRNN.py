@@ -68,7 +68,6 @@ class CRNN(nn.Module):
         #     nn.ReLU(inplace=True),
         #     nn.Conv2d(in_channels=self.ch4, out_channels=self.ch4, kernel_size=1, stride=1),
         #     nn.AdaptiveAvgPool2d((1,1)),
-        )
 
         if self.rnn_unit=='LSTM':
             self.lstm = nn.LSTM(
@@ -182,7 +181,7 @@ class CESN(nn.Module):
             nn.Dropout(p=0.5),
             nn.Conv2d(in_channels=self.ch2, out_channels=self.ch2, kernel_size=1, stride=1),
             nn.MaxPool2d(kernel_size=2),
-        # )
+        )
         # self.conv3 = nn.Sequential(
         #     nn.Conv2d(in_channels=self.ch2, out_channels=self.ch3, kernel_size=self.k3, stride=self.s3, padding=self.p3, dilation=self.d3),
         #     nn.BatchNorm2d(self.ch3, momentum=0.01),
@@ -197,20 +196,19 @@ class CESN(nn.Module):
         #     nn.Conv2d(in_channels=self.ch4, out_channels=self.ch4, kernel_size=1, stride=1),
         #     nn.AdaptiveAvgPool2d((1,1)),
         # )
-   
         self.lstm  =  ESN(input_size=self.input_size, 
-                                        hidden_size=self.hidden_size,
-                                        output_size=self.num_classes, 
-                                        num_layers=self.num_layers,
-                                        leaking_rate=self.leaking_rate, 
-                                        spectral_radius=self.spectral_radius,
-                                        density=self.sparsity,
-                                        output_steps='all', 
-                                        lambda_reg=0.1,
-                                        readout_training='inv',
-                                        batch_first=True).cuda()
+                                    hidden_size=self.hidden_size,
+                                    output_size=self.num_classes, 
+                                    num_layers=self.num_layers,
+                                    leaking_rate=self.leaking_rate, 
+                                    spectral_radius=self.spectral_radius,
+                                    density=1.0-self.sparsity,
+                                    output_steps='mean', 
+                                    lambda_reg=1.0/(self.hidden_size),
+                                    readout_training='cholesky',
+                                    batch_first=True).cuda()
 
-      
+    
         # self.fc1 = nn.Linear(self.hidden_size, self.num_classes)
         self.act = nn.Sigmoid()
 
@@ -414,4 +412,8 @@ class ResCRNN(nn.Module):
             out = self.fc1(out[:, -1, :])
 
         return out
+
+
+
+
 

@@ -1,20 +1,24 @@
 #!/bin/bash
-#SBATCH --job-name=wconv3dESN_h-512_lkr-0.9_spy-0.2_spl-0.9
-#SBATCH --nodes=4 
+#SBATCH --job-name=bCESN
+#SBATCH --nodes=4
 #SBATCH -p batch 
-#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/weizmann_512__conv3DESN.txt
+#SBATCH --cpus-per-task=4
+#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/logs/bsr_4096_convESN.txt
+#SBATCH --error=/home-mscluster/tmashinini/MSC/Code/Python/logs/bsr_4096_convESN.err
 num_frames=80
 num_dim=64
 ch=2
-lr=0.9
-ep=500
-for dataset in 'WEIZMANN';
+lr=0.1
+ep=2000
+bs=32
+# BSR WEIZMANN CIFAR_100 CIFAR_10
+for dataset in 'BSR';
 do
-    for h in 512;
+    for h in 4096;
     do 
-        for lkr in 0.9; # leaking rate
+        for lkr in 0.8; # leaking rate
         do
-            for spy in 0.2; # sparsity
+            for spy in 0.8; # sparsity
             do 
                 for spl in 0.9; # spectral radius
                 do
@@ -31,7 +35,7 @@ do
                         source ~/.bashrc 
                         conda activate msc
                         # python main_conv3D.py --run-name=${dataset}-conv3d_h1-${h1}_h2-${h2}_dp-${dp} --data-path=/Users/thabang/Documents/msc/data/${dataset} --save-path=/Users/thabang/Documents/msc/data/${dataset}/results  --num-epochs=500  --batch-size=1 --learning-rate=0.1 --num-frames=$num_frames  --num-past-step=1 --num-future-step=1 --image-dimension=$num_dim  --threshold=0.5  --in-channels=200  --sample-size=$num_dim  --sample-duration=$num_frames --hidden-one=$h1 --hidden-two=$h2  --dropout-prob=$dp
-                        python3 /home-mscluster/tmashinini/MSC/Code/Python/main_conv3DESN.py --run-name=${dataset}-conv3dESN_h-${h}_lkr-${lkr}_spy-${spy}_spl-${spl} --data-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset} --save-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset}/results  --num-epochs=$ep  --batch-size=64 --learning-rate=$lr --num-frames=$num_frames  --num-past-step=1 --num-future-step=1 --image-dimension=$num_dim  --threshold=0.5  --in-channels=$ch  --sample-size=$num_dim  --sample-duration=$num_frames --hidden=$h  --num_layers=$nlyrs --leaking-rate=${lkr}  --sparsity=${spy} --spectral-radius=${spl}
+                        python3 /home-mscluster/tmashinini/MSC/Code/Python/main_convESN.py --run-name=${dataset}-convESN_h-${h}_lkr-${lkr}_spy-${spy}_spl-${spl} --data-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset} --save-path=/home-mscluster/tmashinini/MSC/Data/processed_data/${dataset}/results  --num-epochs=$ep  --batch-size=$bs --learning-rate=$lr --num-frames=$num_frames  --num-past-step=1 --num-future-step=1 --image-dimension=$num_dim  --threshold=0.5  --in-channels=$ch  --sample-size=$num_dim  --sample-duration=$num_frames --hidden=$h  --num_layers=$nlyrs --leaking-rate=${lkr}  --sparsity=${spy} --spectral-radius=${spl}
             
                     done
                 done

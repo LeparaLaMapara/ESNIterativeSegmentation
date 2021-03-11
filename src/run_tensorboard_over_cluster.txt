@@ -2,3 +2,14 @@
 
  ssh tmashinini@146.141.21.100 -L 8001:146.141.21.164:14192  'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh'
 
+
+
+ ssh tmashinini@146.141.21.100 -L 8001:146.141.21.164:14192  'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh'
+
+
+
+https://researchcomputing.princeton.edu/support/knowledge-base/tensorflow
+
+tensorboard --logdir /home-mscluster/tmashinini/MSC/Data/processed_data/*/results/*/tensorboard_logs/ --bind_all
+
+ssh -N -f -L 6006:127.0.0.1:6006  tmashinini@146.141.21.100

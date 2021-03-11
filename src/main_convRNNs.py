@@ -190,6 +190,7 @@ if __name__=="__main__":
                 labels = labels.to(device, non_blocking=True)
                 inputs= inputs.squeeze(1)
                 labels= labels.squeeze(1)
+                # print('inputs,', inputs.shape)
                 # nputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
 
                 # forward-propogation
@@ -275,7 +276,8 @@ if __name__=="__main__":
                     best_valid_epoch = epoch
 
                     # delete previous checkpoint (s)
-                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt.*")):
+                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt*")):
+                        # print(ckpt_fp)
                         os.remove(ckpt_fp)
 
                     # save weights

@@ -84,8 +84,10 @@ if __name__=="__main__":
         torch.manual_seed(args.seed)
 
     # get the number of classess
-    args.leaking_rate = 1./(args.image_dimension)
-
+    if args.leaking_rate:
+        args.leaking_rate= args.leaking_rate*1.0
+    else:
+        args.leaking_rate = 2./args.image_dimension
     
     # get the number of classess
     args.num_classes = args.image_dimension*args.image_dimension
@@ -197,6 +199,7 @@ if __name__=="__main__":
                 labels = labels.to(device, non_blocking=True)
                 inputs= inputs.squeeze(1)
                 labels= labels.squeeze(1)
+                # print('inputs,', inputs.shape)
                 # nputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
 
                 # forward-propogation
@@ -231,6 +234,8 @@ if __name__=="__main__":
                     labels = labels.to(device, non_blocking=True)
                     inputs= inputs.squeeze(1)
                     # inputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
+
+
 
                     # forward-propogation
                     outputs = model(inputs) 
@@ -280,7 +285,8 @@ if __name__=="__main__":
                     best_valid_epoch = epoch
 
                     # delete previous checkpoint (s)
-                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt.*")):
+                    for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt*")):
+                        # print(ckpt_fp)
                         os.remove(ckpt_fp)
 
                     # save weights

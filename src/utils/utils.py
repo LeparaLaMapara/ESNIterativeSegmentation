@@ -116,10 +116,20 @@ class LevelSetDataset(Dataset):
 
     def _augs(self, x, seed):
         np.random.seed(seed)
+
         if np.random.random() > 0.5:
-            image = TF.hflip(x)
+            x = TF.hflip(x)
+
         if np.random.random() > 0.5:
-            image = TF.vflip(x)
+            x = TF.vflip(x)
+
+        angles = [60, 90, 180, 270, 360]
+        i = np.random.randint(0, len(angles))
+        if np.random.random() > 0.5:
+            x = TF.rotate(x, angles[i])
+
+        # if np.random.random() > 0.5:
+        #     x = TF.gaussian_blur(x, 3)
         return x
 
     def __getitem__(self, index):
@@ -136,7 +146,7 @@ class LevelSetDataset(Dataset):
             x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg')).convert('L')
             x = self.transforms(x)
             x = self._create_binary_mask(x)
-            if self.training_mode=='train' and len(self.ids)<1000:
+            if self.training_mode=='train' and len(self.ids)<=1000:
                  xi  = self._augs(xi, seed)
                  x  = self._augs(x, seed)
             x = torch.stack((xi,x),dim=1)
@@ -145,7 +155,7 @@ class LevelSetDataset(Dataset):
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
         y = self._create_binary_mask(y)
-        if self.training_mode=='train' and len(self.ids)<1000:
+        if self.training_mode=='train' and len(self.ids)<=1000:
             y  = self._augs(y, seed)
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
                                           
@@ -198,3 +208,4 @@ class LevelSetDataset(Dataset):
 #         train_split= 0.8,
 #         training_mode='train'
 #         )
+
