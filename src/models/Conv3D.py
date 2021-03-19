@@ -64,8 +64,6 @@ class CNN3D(nn.Module):
         self.drop = nn.Dropout3d(p=self.drop_p)
         self.pool = nn.MaxPool3d(kernel_size=self.pool_k)
 
-        print('fc1', self.ch2 * self.conv2_output_shape[0] * self.conv2_output_shape[1] * self.conv2_output_shape[2])
-
         # self.fc1 = nn.Linear(self.ch2 * self.conv2_output_shape[0] * self.conv2_output_shape[1] * self.conv2_output_shape[2], self.hidden1)
         self.fc1 = nn.Linear(3648, self.hidden1)
 

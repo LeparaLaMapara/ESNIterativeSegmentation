@@ -203,9 +203,11 @@ class CESN(nn.Module):
                                     leaking_rate=self.leaking_rate, 
                                     spectral_radius=self.spectral_radius,
                                     density=1.0-self.sparsity,
-                                    output_steps='mean', 
-                                    lambda_reg=1.0/(self.hidden_size),
-                                    readout_training='cholesky',
+                                    output_steps='last', 
+                                    lambda_reg=0.109,
+                                    w_ih_scale=0.5,
+                                    w_io=False,
+                                    readout_training='inv',
                                     batch_first=True).cuda()
 
     

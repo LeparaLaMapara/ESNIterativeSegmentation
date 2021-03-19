@@ -1,8 +1,9 @@
+Running tensorboard on SLURM
+
+Approach 2: 
  ssh -L 8001:localhost:8775 tmashinini@146.141.21.100 'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh /home-mscluster/tmashinini/MSC/Data/processed_data/*/results/*/tensorboard_logs/'
 
  ssh tmashinini@146.141.21.100 -L 8001:146.141.21.164:14192  'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh'
-
-
 
  ssh tmashinini@146.141.21.100 -L 8001:146.141.21.164:14192  'source ~/.bashrc && conda activate msc && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /home-mscluster/tmashinini/MSC/Code/Python/ && sbatch multi_tb.sh'
 
@@ -10,6 +11,27 @@
 
 https://researchcomputing.princeton.edu/support/knowledge-base/tensorflow
 
-tensorboard --logdir /home-mscluster/tmashinini/MSC/Data/processed_data/*/results/*/tensorboard_logs/ --bind_all
 
-ssh -N -f -L 6006:127.0.0.1:6006  tmashinini@146.141.21.100
+
+Approach 1: works fine
+
+login into the clusters :
+    - tmashinini@146.141.21.100 and password
+
+run this one the headnode:
+    - source ~/.bashrc && conda activate msc && bash multi_tb.sh "/home-mscluster/tmashinini/MSC/Data/processed_data/*/results/*/tensorbod_logs/"
+
+Then open browser:
+    - http://localhost:6006/
+
+    /home-mscluster/tmashinini/MSC/Data/processed_data/BSR/results//tensorboard_logs
+
+
+
+ /6uJonLt
+
+   ssh -L 8001:localhost:8775 lukhetho@dccxl002.pok.ibm.com 'conda activate tf && export TMPDIR=/tmp/$USER; mkdir -p $TMPDIR && cd /dccstor/astro/thabang/work/future_of_climate/seasonal_forecast_2944/src/3d_cnn/  && ./multi_tb.sh /dccstor/eevdata/thabang_mashinini/future_of_climate/seasonal_forecast_2944/3dcnn_runs/*/tensorboard_logs/'
+
+   ssh -L 8001:localhost:8775 lukhetho@dccxl002.pok.ibm.com 'conda activate tf && export TMPDIR=/tmp/$USER; 
+   mkdir -p $TMPDIR && cd /dccstor/astro/thabang/work/future_of_climate/seasonal_forecast_2944/src/pca_lstm/single_step_lstm/ 
+   && ./multi_tb.sh /dccstor/astro/thabang/work/future_of_climate/seasonal_forecast_2944/*/tensorboard_logs/'

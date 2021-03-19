@@ -25,8 +25,8 @@ from utils.metrics import iou_pytorch, pixel_segementation_evaluation
 from utils.PytorchEarlyStopping import EarlyStopping
 from utils.loss import weighted_binary_cross_entropy, generalised_loss
 
-# from model.RNN  import  ImageLSTM, ImageGRU, ImageRNN, ESN
-# from model.ConvRNN import CRNN, CESN, ResCESN, ResCRNN
+# from models.RNN  import  ImageLSTM, ImageGRU, ImageRNN, ESN
+from models.ConvRNN import CRNN, CESN
 from models.Conv3D import    CNN3D
 
 if __name__=="__main__":
@@ -56,9 +56,13 @@ if __name__=="__main__":
     parser.add_argument("--sample-size", type=int, default=128 , help=" [128]")
     parser.add_argument("--sample-duration", type=int, default=16, help=" [16]")
 
+    parser.add_argument("--seed", type=int, default=0, help="Seed for random number generation [0]")
+
+
 
     args = parser.parse_args()
 
+    run_path = os.path.join( args.save_path, args.run_name)
 
     # logging
     logger = get_logger(run_path)
@@ -79,42 +83,56 @@ if __name__=="__main__":
     logger.info("Commnad-line arguments")
     for arg, value in sorted(vars(args).items()):
         logger.info(f"arguments {args}: {value}")
-    
-     # data loader
-    logger.info("Creating dataset......")
-    ls_dataset = LevelSetDataset(
-        input_image_path=os.path.join(args.data_path,"images"),
-        target_image_path=os.path.join(args.data_path,"labels"),
-        threshold=args.threshold,
-        num_past_steps=args.num_past_step,
-        num_future_steps=args.num_future_step,
-        image_dimension=args.image_dimension,
-         num_frames=args.num_frames ,
-        valid_split= 0.1,     
-        train_split= 0.8,
-        training_mode='train'
-        )
+ 
 
     # device to perform computation (CPU or GPU)
     device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     logger.info(f"device: {device}")
 
+   model = CNN3D(
+        in_channels=args.in_channels,
+        sample_size=args.sample_size,
+        sample_duration=args.sample_duration,
+        drop_p=args.dropout_prob, 
+        hidden1=args.hidden_one,
+        hidden2=args.hidden_two,
+        num_classes=args.num_classes
+    ).to(device)
 
-    # create test ds for final evaluation
-    logger.info(f"Creating test dataset for evaluating best model......")
-    ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=True, pin_memory=True, num_workers=4)
         
     for ds in ['WEIZMANN','BSR',' CIFAR_10','CIFAR_100']:
         try:
+    
+            args.data_path=os.path.join('/home-mscluster/tmashinini/MSC/Data/processed_data/',ds)
+            # data loader
+            logger.info("Creating dataset......")
+            ls_dataset = LevelSetDataset(
+            input_image_path=os.path.join(args.data_path,"images"),
+            target_image_path=os.path.join(args.data_path,"labels"),
+            threshold=args.threshold,
+            num_past_steps=args.num_past_step,
+            num_future_steps=args.num_future_step,
+            image_dimension=args.image_dimension,
+                num_frames=args.num_frames ,
+            valid_split= 0.1,     
+            train_split= 0.8,
+            training_mode='train'
+            )
+
+                        # create test ds for final evaluation
+            logger.info(f"Creating test dataset for evaluating best model......")
+            ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=False, pin_memory=True, num_workers=4)
+
     
             model_fp = f'/home-mscluster/tmashinini/MSC/Data/processed_data/{ds}/results/*{ds}*/checkpoints/*.pt'
 
             models = glob(model_fp)
 
-            for model in models:
+            for model_fp in models:
 
                 logger.info(f"Loading model for testing.....")
-                model.load_state_dict(torch.load(model).to(device)
+          
+                model.load_state_dict(storch.load(model_fp))
 
                 model.eval()
                 for batch_idx, (inputs, labels, names) in enumerate(ls_eval_ds):
@@ -130,6 +148,8 @@ if __name__=="__main__":
                     labels = labels.view(-1,args.in_channels, args.num_frames, args.image_dimension, args.image_dimension)
                     # save the prediction and the labels
                     for t in np.arange(inputs.shape[2], 10):
+                        print('name', name.split('_')[0])
+
                         label = labels[:, :, t]
                         output = outputs[:, :, t]
 

@@ -235,8 +235,6 @@ if __name__=="__main__":
                     inputs= inputs.squeeze(1)
                     # inputs= inputs.view(-1,args.in_channels, args.sample_duration-1,args.image_dimension, args.image_dimension)
 
-
-
                     # forward-propogation
                     outputs = model(inputs) 
                     

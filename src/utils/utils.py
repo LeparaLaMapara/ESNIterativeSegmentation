@@ -48,8 +48,16 @@ class LevelSetDataset(Dataset):
         self.input_image_fp = sorted(glob(os.path.join(self.input_image_path , "*")), 
                                     key=lambda x: int(os.path.basename(x).split('.')[0])
                                                      )
+        print()
+        print('leng', len(self.input_image_fp))
+        print()
+        if len(self.input_image_fp)>1000:
 
-        ids = np.arange(1, len(self.input_image_fp))
+            n=1000
+        else:
+            n=len(self.input_image_fp)
+
+        ids = np.arange(1, n)
         # split the data
         train_idx  = int(self.train_split  * len(ids))
         valid_idx  = int(self.valid_split * len(ids))
@@ -123,13 +131,14 @@ class LevelSetDataset(Dataset):
         if np.random.random() > 0.5:
             x = TF.vflip(x)
 
-        angles = [60, 90, 180, 270, 360]
+        angles = [-60, -90, -180, -270, -360, 60, 90, 180, 270, 360]
         i = np.random.randint(0, len(angles))
         if np.random.random() > 0.5:
             x = TF.rotate(x, angles[i])
 
-        # if np.random.random() > 0.5:
-        #     x = TF.gaussian_blur(x, 3)
+        if np.random.random() > 0.5:
+            x = TF.gaussian_blur(x, 3)
+              # x = TF.affine()
         return x
 
     def __getitem__(self, index):
@@ -145,23 +154,21 @@ class LevelSetDataset(Dataset):
         for step_idx, step in enumerate(np.arange(1, self.num_frames, self.num_past_steps)):
             x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg')).convert('L')
             x = self.transforms(x)
-            x = self._create_binary_mask(x)
             if self.training_mode=='train' and len(self.ids)<=1000:
                  xi  = self._augs(xi, seed)
                  x  = self._augs(x, seed)
+            x = self._create_binary_mask(x)
             x = torch.stack((xi,x),dim=1)
             X.append(x)
 
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
-        y = self._create_binary_mask(y)
         if self.training_mode=='train' and len(self.ids)<=1000:
             y  = self._augs(y, seed)
+        y = self._create_binary_mask(y)
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
                                           
         X = torch.stack(X, dim=1)
-
-        # print('big X:', X.shape)
 
         # (n, t, channel, h, w) ---> (n, channel, t, h, w)
         if len(X.shape)==5:
@@ -195,17 +202,4 @@ class LevelSetDataset(Dataset):
         pin_memory=pin_memory
         )
         return dl
-
-
-# ds = LevelSetDataset(
-#         input_image_path='F:/MSC/Data/processed_data/BSR/images/',
-#         target_image_path='F:/MSC\Data\processed_data\BSR\labels',
-#         threshold=0.5,
-#         num_input_steps=3,
-#         image_dimension=1,
-#          num_frames=90 ,
-#         valid_split= 0.1,     
-#         train_split= 0.8,
-#         training_mode='train'
-#         )
 
