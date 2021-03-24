@@ -136,12 +136,6 @@ if __name__=="__main__":
     # device to perform computation (CPU or GPU)
     device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     logger.info(f"device: {device}")
-    # initliaze optimizer 
-    # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-    optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
-
-    # learning rate schedular
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
 
     # loss function
     loss_function = weighted_binary_cross_entropy
@@ -152,7 +146,7 @@ if __name__=="__main__":
         params = np.array([1.9, 1, 0.95, 0.35, 0.0915, 0.001795])
     if args.state=='spectralradius':
         params = np.array([1, 0.95, 0.65, 0.45, 0.25, 0.09])
-    else args.state=='sparsity':
+    if args.state=='sparsity':
         params = np.array([1, 0.8, 0.6, 0.4, 0.2])
 
     for param in params:
@@ -171,7 +165,7 @@ if __name__=="__main__":
                 sparsity=args.sparsity
             ).to(device)
 
-        elif args.state=='leakrate':
+        if args.state=='leakrate':
             logger.info(f"Creating model for {args.state}......")
             model = CESN(
             in_channels=args.in_channels,
@@ -185,10 +179,9 @@ if __name__=="__main__":
             sparsity=args.sparsity
             ).to(device)
 
-        elif args.state=='spectralradius':
+        if args.state=='spectralradius':
             logger.info(f"Creating model for {args.state}......")
-
-             model = CESN(
+            model = CESN(
             in_channels=args.in_channels,
             sample_size=args.sample_size,
             sample_duration=args.sample_duration,
@@ -200,9 +193,9 @@ if __name__=="__main__":
             sparsity=args.sparsity
             ).to(device)
 
-        else args.state=='sparsity':
+        if args.state=='sparsity':
             logger.info(f"Creating model for {args.state}......")
-             model = CESN(
+            model = CESN(
             in_channels=args.in_channels,
             sample_size=args.sample_size,
             sample_duration=args.sample_duration,
@@ -213,6 +206,14 @@ if __name__=="__main__":
             spectral_radius=args.spectral_radius,
             sparsity=param
             ).to(device)
+
+        # initliaze optimizer 
+        # optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.9)
+
+        # learning rate schedular
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
+
 
 
         # early_stopping = EarlyStopping(name=run_path,patience=10, verbose=True)  
@@ -328,22 +329,15 @@ if __name__=="__main__":
             valid_epoch_accuracy.append(np.mean(valid_running_accuracy))
             valid_epoch_precision.append(np.mean(valid_running_precision))
             valid_epoch_recall.append(np.mean(valid_running_recall))
+            param_state.append(param)
 
             if epoch > epoch_buffer:
                 if valid_epoch_dice[-1]>best_valid_iou:
                     best_valid_iou = valid_epoch_dice[-1]
                     best_valid_epoch = epoch
 
-            #         # delete previous checkpoint (s)
-            #         for ckpt_fp in glob(os.path.join(checkpoints_path, "*.pt*")):
-            #             # print(ckpt_fp)
-            #             os.remove(ckpt_fp)
-
-                    # save weights
-                    #torch.save(model.state_dict(), os.path.join(checkpoints_path, f"{args.run_name}_cp-{epoch:04d}.pt"))
-
-            msg ='Epoch: {:04d}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
-            epoch, train_epoch_loss[-1], valid_epoch_loss[-1],  valid_epoch_precision[-1], valid_epoch_recall[-1], 
+            msg ='State: {}, Param: {:04d}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
+            args.state, param, train_epoch_loss[-1], valid_epoch_loss[-1],  valid_epoch_precision[-1], valid_epoch_recall[-1], 
             valid_epoch_accuracy[-1], valid_epoch_dice[-1], scheduler.get_last_lr()[0], time.time()-epoch_start_time)
             
             # log average lossses
@@ -362,17 +356,20 @@ if __name__=="__main__":
         results_path = os.path.join(args.save_path, args.run_name, "results")
         os.makedirs(results_path, exist_ok=True)
 
+        print(valid_epoch_loss)
+        print(param_state)
+        print(len(valid_epoch_loss), len(param_state))
+
         train_valid_results_df = pd.DataFrame({'train_loss':[x for x in train_epoch_loss],
         'valid_loss': [x for x in valid_epoch_loss],
         'valid_iou': [x for x in valid_epoch_dice],
         'valid_f1score': [x for x in valid_epoch_accuracy],
         'Valid_precision': [x for x in valid_epoch_precision],
-        'Valid_recall': [x for x in valid_epoch_recall]}
+        'Valid_recall': [x for x in valid_epoch_recall],
         args.state: [x for x in param_state]}
-
         )
 
-        train_valid_results_df.to_csv(os.path.join(results_path,"train_valid.csv"), index_label="epoch", float_format='%.4f')
+        train_valid_results_df.to_csv(os.path.join(results_path,f"train_valid_{args.state}.csv"), index_label="epoch", float_format='%.4f')
 
             # create empty dataframe 
             # test_df = pd.DataFrame(columns=['iou', 'f1score', 'precision', 'recall'])
@@ -383,7 +380,6 @@ if __name__=="__main__":
 
             # logger.info(f"Loading model from best validation epoch.....")
             #model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epoch:04d}.pt")))
-
 
             # model.eval()
             # for batch_idx, (inputs, labels, names) in enumerate(ls_eval_ds):
@@ -409,7 +405,7 @@ if __name__=="__main__":
             # # save test to disk
             # test_df.to_csv(os.path.join(results_path,"best_test_results.csv"), index_label="step", float_format='%.4f')
 
-        logger.info(f'========= DONE ========')
+    logger.info(f'========= DONE ========')
 
 
 

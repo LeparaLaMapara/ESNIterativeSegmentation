@@ -204,8 +204,8 @@ class CESN(nn.Module):
                                     spectral_radius=self.spectral_radius,
                                     density=1.0-self.sparsity,
                                     output_steps='last', 
-                                    lambda_reg=0.109,
-                                    w_ih_scale=0.5,
+                                    lambda_reg=0.01009,
+                                    w_ih_scale=1,
                                     w_io=False,
                                     readout_training='inv',
                                     batch_first=True).cuda()
