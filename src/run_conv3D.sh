@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=10Conv         # create a short name for your job
+#SBATCH --job-name=wConv         # create a short name for your job
 #SBATCH --nodes=5                # node count
 #SBATCH -p batch    
 #SBATCH --cpus-per-task=4        # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --ntasks-per-node=4      # number of tasks per node
-#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/logs/cifar10_4096_4096_0.5_conv3D.txt
-#SBATCH --error=/home-mscluster/tmashinini/MSC/Code/Python/logs/cifar10_4096_4096_0.5_conv3D.err
+# SBATCH --ntasks-per-node=4      # number of tasks per node
+#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/logs/w_4096_4096_0.5_conv3D.txt
+#SBATCH --error=/home-mscluster/tmashinini/MSC/Code/Python/logs/w_4096_4096_0.5_conv3D.err
 
 num_frames=80
 num_dim=64
@@ -13,8 +13,8 @@ ch=2
 lr=0.1
 ep=500
 bs=32
-# BSR CIFAR_100 CIFAR_10
-for dataset in  'CIFAR_10';
+# WEIZMANN BSR CIFAR_100 CIFAR_10
+for dataset in  'WEIZMANN';
 do
     for h1 in 4096;
     do 
@@ -29,3 +29,5 @@ do
         done
     done
 done
+
+

@@ -51,12 +51,13 @@ class LevelSetDataset(Dataset):
         print()
         print('leng', len(self.input_image_fp))
         print()
-        if len(self.input_image_fp)>1000:
+        # if len(self.input_image_fp)>1000:
 
-            n=1000
-        else:
-            n=len(self.input_image_fp)
+        #     n=2000
+        # else:
+        #     n=len(self.input_image_fp)
 
+        n=len(self.input_image_fp)
         ids = np.arange(1, n)
         # split the data
         train_idx  = int(self.train_split  * len(ids))
@@ -73,10 +74,14 @@ class LevelSetDataset(Dataset):
         # test
         if self.training_mode=='test':
             self.ids = ids[train_idx+valid_idx:]
+        
+        # calculate mean and std using training set
+        train_ids = ids[0:train_idx]
+        train_fps = [self.input_image_fp[x] for x in train_ids]
+        print(train_fps)
 
-   
-        self.mean_image   =  self._compute_mean(self.input_image_fp)
-        self.stddev_image = self._compute_stddev(self.input_image_fp)
+        self.mean_image   =  self._compute_mean(train_fps)
+        self.stddev_image = self._compute_stddev(train_fps)
 
         self.transforms= torchvision.transforms.Compose([
                                     torchvision.transforms.Resize(size=(self.image_dimension,self.image_dimension), 
@@ -136,8 +141,8 @@ class LevelSetDataset(Dataset):
         if np.random.random() > 0.5:
             x = TF.rotate(x, angles[i])
 
-        if np.random.random() > 0.5:
-            x = TF.gaussian_blur(x, 3)
+        # if np.random.random() > 0.5:
+        #     x = TF.gaussian_blur(x, 3)
               # x = TF.affine()
         return x
 
@@ -154,7 +159,7 @@ class LevelSetDataset(Dataset):
         for step_idx, step in enumerate(np.arange(1, self.num_frames, self.num_past_steps)):
             x = Image.open(os.path.join(self.target_image_path,f'{idx}_{step}.jpg')).convert('L')
             x = self.transforms(x)
-            if self.training_mode=='train' and len(self.ids)<=1000:
+            if self.training_mode=='train':
                  xi  = self._augs(xi, seed)
                  x  = self._augs(x, seed)
             x = self._create_binary_mask(x)
@@ -163,7 +168,7 @@ class LevelSetDataset(Dataset):
 
         y = Image.open(os.path.join(self.target_image_path, f'{idx}_{(self.num_frames+self.num_past_steps+self.num_future_steps)-2}.jpg'))
         y = self.transforms(y)
-        if self.training_mode=='train' and len(self.ids)<=1000:
+        if self.training_mode=='train':
             y  = self._augs(y, seed)
         y = self._create_binary_mask(y)
         name  = f'{idx}_{self.num_frames-(self.num_past_steps+self.num_future_steps)}'
@@ -179,7 +184,7 @@ class LevelSetDataset(Dataset):
         
         return X, y, name
 
-    def create_set(self, batch_size ,shuffle=True,  pin_memory=True, num_workers=4):
+    def create_set(self, batch_size ,shuffle=True,  pin_memory=True, num_workers=4, training_mode='train'):
 
         ds = LevelSetDataset(
         input_image_path=self.input_image_path,
@@ -191,7 +196,7 @@ class LevelSetDataset(Dataset):
         num_frames=self.num_frames ,
         valid_split= self.valid_split,     
         train_split= self.train_split,
-        training_mode=self.training_mode
+        training_mode=training_mode
         )
 
         dl = torch.utils.data.DataLoader(

@@ -84,6 +84,11 @@ if __name__=="__main__":
     tb_log_path = os.path.join(run_path,"tensorboard_logs", args.run_name)
     os.makedirs(tb_log_path, exist_ok=True)
     summary_writer = tensorboard.SummaryWriter(tb_log_path, filename_suffix=args.run_name)
+    try:
+        os.remove(os.path.join(tb_log_path, args.run_name, "*"))
+    except FileNotFoundError:
+        pass
+
 
     # checkpoints
     checkpoints_path = os.path.join(run_path, "checkpoints")
@@ -113,8 +118,8 @@ if __name__=="__main__":
         training_mode='train'
         )
 
-    ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
-    ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4)
+    ls_train_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4, training_mode='train')
+    ls_valis_ds = ls_dataset.create_set(batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=4,training_mode='test')
 
     # device to perform computation (CPU or GPU)
     device   = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -314,7 +319,7 @@ if __name__=="__main__":
 
     # create test ds for final evaluation
     logger.info(f"Creating test dataset for evaluating best model......")
-    ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=False, pin_memory=True, num_workers=4)
+    ls_eval_ds = ls_dataset.create_set(batch_size=1, shuffle=False, pin_memory=True, num_workers=4, training_mode='valid')
 
     logger.info(f"Loading model from best validation epoch.....")
     model.load_state_dict(torch.load(os.path.join(checkpoints_path, f"{args.run_name}_cp-{best_valid_epoch:04d}.pt")))
