@@ -1,26 +1,26 @@
 #!/bin/bash
-#SBATCH --job-name=WhpESN
+#SBATCH --job-name=HESN
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=4        # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH -p biggpu
 # SBATCH --ntasks-per-node=4      # number of tasks per node
-#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/logs/Whpesn_convESN.txt
-#SBATCH --error=/home-mscluster/tmashinini/MSC/Code/Python/logs/Whpesn_convESN.err
+#SBATCH --output=/home-mscluster/tmashinini/MSC/Code/Python/logs/bsr_h_convESN.txt
+#SBATCH --error=/home-mscluster/tmashinini/MSC/Code/Python/logs/bsr_h_convESN.err
 num_frames=80
 num_dim=64
 ch=2
 lr=0.1
-ep=10
+ep=100
 bs=32
-state='hidden' #'leakrate', 'spectralradius' 'sparsity'
+state='hidden' # 'hidden' 'leakrate', 'spectralradius' 'sparsity'
 # BSR WEIZMANN CIFAR_100 CIFAR_10
-for dataset in 'WEIZMANN';
+for dataset in 'BSR';
 do
     for h in 4096;
     do 
         for lkr in 0.9; # leaking rate
         do
-            for spy in 0.8; # sparsity
+            for spy in 0.1; # sparsity
             do 
                 for spl in 0.9; # spectral radius
                 do

@@ -51,11 +51,11 @@ class LevelSetDataset(Dataset):
         print()
         print('leng', len(self.input_image_fp))
         print()
-        # if len(self.input_image_fp)>1000:
+        if len(self.input_image_fp)>10000:
 
-        #     n=2000
-        # else:
-        #     n=len(self.input_image_fp)
+            n=10000
+        else:
+            n=len(self.input_image_fp)
 
         n=len(self.input_image_fp)
         ids = np.arange(1, n)
@@ -128,6 +128,7 @@ class LevelSetDataset(Dataset):
         return len(self.ids) - (self.num_past_steps+self.num_future_steps)
 
     def _augs(self, x, seed):
+        "https://pytorch.org/vision/stable/transforms.html"
         np.random.seed(seed)
 
         if np.random.random() > 0.5:
@@ -136,7 +137,7 @@ class LevelSetDataset(Dataset):
         if np.random.random() > 0.5:
             x = TF.vflip(x)
 
-        angles = [-60, -90, -180, -270, -360, 60, 90, 180, 270, 360]
+        angles = [60, 90, 180, 270, 360]
         i = np.random.randint(0, len(angles))
         if np.random.random() > 0.5:
             x = TF.rotate(x, angles[i])
@@ -147,9 +148,11 @@ class LevelSetDataset(Dataset):
         return x
 
     def __getitem__(self, index):
-
-        seed = np.random.randint(0, 100)
-        
+        if self.training_mode=='train':
+            seed = np.random.randint(0, 100)
+        else:
+            seed=0
+            
         X, Y , names = [], [], []
         idx = self.ids[index]
         xi = Image.open(os.path.join(self.input_image_path, str(self.ids[index])+'.jpg')).convert('L')

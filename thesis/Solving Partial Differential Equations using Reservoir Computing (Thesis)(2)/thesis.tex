@@ -1082,11 +1082,12 @@ In practice, the spectral radius $\rho (\mathbf{\Theta})$ should be close to $1$
 % \label{sec:memory_capacity}
 % TO DO==========================
 
-\newpage
+% \newpage
 
 
 \subsection{Learning From The Reservoir}
 \label{sec:Learning}
+
 \subsubsection{Introduction}
 Learning weights associated with reservoir readouts can be done in two ways, through an online and offline approach. The offline method, or batch mode, consists in collecting all the states $\mathbf{u}(t)$ of the reservoir during the learning phase in a matrix $\mathbf{U} \in R^{N \times T}$, and all the target $\mathbf{y}(t)$  results in a matrix $\mathbf{Y} \in R^{M \times T}$, to compute the output weights $\mathbf{\Theta}^{out}$.
 
@@ -1529,15 +1530,15 @@ The hypothesis of this research is:
 \label{sec:research_questions}
 Here we present our research questions that will guide us through the research process. The questions we are aiming to answer are:
 \begin{itemize}
-    \item how to generate a sequence (i.e. spatio-temporal) data $X_{t}$ from a single image $\mathbf{I}$ if we consider $\phi_{t}$ in the variational levelset  as the reservoir in ESNs with the same updating manner?
-    \item can we learn variational levelset (PDE) using ESN? 
-    \item can we find a set optimal parameters of the ESN to achieve optimal performance in learning variational levelset (PDE)? 
+    \item how to generate a sequence (i.e. spatio-temporal) data $X_{t}$ from a single image $\mathbf{I}$ if we consider $\phi_{t}$ in the variational levelset  as the reservoir in CESNs with the same updating manner?
+    \item can we learn variational levelset (PDE) using CESN? 
+    \item can we find a set optimal parameters of the CESN to achieve optimal performance in learning variational levelset (PDE)? 
     \item can the CESN outperform the  variational levelset (PDE), in cases where the  variational levelset solution is not optimal?
 \end{itemize}
 
 \subsection{Data Acquisition}
 \label{sec:Datasets}
-For this work, the Weizmann Segmentation (WSD)~\cite{AlpertGBB07} , Berkeley Segmentation Data Set and Benchmarks (BSD)~\cite{amfm_pami2011}, CIFAR-10 and CIFAR-100~\cite{krizhevsky2009learning} datasets for training, validation and testing of models. The CIFAR-10 consist of 60000 \textit{32 $\times$ 32} RGB images in 10 classes, with 6000 images per class. The CIFAR-100 is similar to the CIFAR-10 dataset except it has 100 classes containing 600 images each.  WS database consist of 200 \textit{300 $\times$ 200} RGB images that clearly depict one or two object/s in the foreground that differ from its surroundings by either intensity, texture, or other low level cues.  BSD consist of \textit{481 $\times$ 321} , 200, 100 images for training and testing set, respectively. These dataset consist of natural images.
+For this work, the Weizmann Segmentation (WSD)~\cite{AlpertGBB07} , Berkeley Segmentation Data Set and Benchmarks (BSD)~\cite{amfm_pami2011}, CIFAR-10 and CIFAR-100~\cite{krizhevsky2009learning} datasets for training, validation and testing of models. The CIFAR-10 consist of 60000 \textit{32 $\times$ 32} RGB images in 10 classes, with 6000 images per class. The CIFAR-100 is similar to the CIFAR-10 dataset except it has 100 classes containing 600 images each.  WSD database consist of 200 \textit{300 $\times$ 200} RGB images that clearly depict one or two object/s in the foreground that differ from its surroundings by either intensity, texture, or other low level cues.  BSD consist of \textit{481 $\times$ 321} , 200, 100 images for training and testing set, respectively. These dataset consist of natural images.
 
 % \par{
 % % The Berkeley Segmentation Data Set and Benchmarks 500 (BSR)~\cite{amfm_pami2011} and 
@@ -1656,7 +1657,9 @@ In this section, we look at the LS introduced in~\cite{chan2000active} to demons
 
 
 \subsubsection{Model Architecture}
-The problem we formulated as a spatio-temporal task, therefore we use two types of architecture specialized to capture the spatio and temporal dependencies, a 3D-convolutional neural network (3DCNN)~\cite{tran2015learning} and a convolutional recurrent neural network (RCNN)~\cite{ji20123d, wang2016cnn}. The 3DCNN architecture consist of 2 3D-convolutional block (Conv3D
+The problem we formulated as a spatio-temporal task, therefore we use two types of architecture specialized to capture the spatio and temporal dependencies, a 3D-convolutional neural network (3DCNN)~\cite{tran2015learning, ji20123d, karpathy2014large} and a convolutional recurrent neural network (RCNN)~\cite{ji20123d, wang2016cnn}. 
+
+The 3DCNN architecture consist of 2 3D-convolutional block (Conv3D
 $\rightarrow$
 BatchNorm3D
 $\rightarrow$
@@ -1743,6 +1746,7 @@ the input images are passed into the model as 2D vector of  64 $\times$ 64 $\tim
 
 
 \subsection{Training And Inference}
+\label{sec:training_and_inference}
 
 Given the a series input ${\mathbf{x}_{0}, ...\mathbf{x}_{t}}$ and target series ${\mathbf{y}_{0}, ...\mathbf{y}_{t}}$ with $t=100$ steps (i.e. samples), we treat the LS evolution as a spatio-temporal problem such that we predict $t+n$ steps into the future, where $n=1$. 
 
@@ -1764,31 +1768,50 @@ where $Y_{i,target}$ and $Y_{i}$ represent the ground truth and predicted class 
 In order to ensure that the models learns, we need minimize the loss function and stochastic gradient descent with momentum is used as the optimization functions as discussed in Section~\ref{sec:Learning}. 
 %In order to have a more robust model with generalization we performed several data augmentation such as horizontal and vertical flipping on the input and target image to both the input and target image. All these step were performed randomly in order to reduce bias in the model.  
 
+\subsection{Learning}
 
-\subsection{Hyperparameter Optimization}
+\subsubsection{Optimization}
+\label{sec:Optimization}
+In order to apply the previously mentioned techniques, we use parallel hyperparameter search optimization to choose the optimal leaking rate, sparsity, spectral radius and input scaling for the CESN. The number of hidden (reservoir) units is 4096 neurons. We use Stochastic Gradient Descent (SGD) to optimize our models across a computing cluster. We use mini-batches of 32 examples, momentum of 0.9 and weight decay of 0.1. 
 
+All the models are initialized with learning rates of 0.1 this value is further reduced for $\frac{N_{epoch}}{5}$ step during training, where $N_{epoch}$ is the number of epochs. Parallel runs for each parameter search, are  monitored using tensorboard and the optimal paramaters are selected based on the the minimization of the validation loss and maximization of the IoU, for each of the databases used presented in Tables~\ref{table:cifar_10_hyperparameter},~\ref{table:cifar_100_hyperparameter},~\ref{table:BSD_hyperparameter} and~\ref{table:Weizmann_hyperparameter}.
 
-In order to apply the previously mentioned techniques, we used a parallel hyperparameter search optimization to choose the optimal leaking rate, sparsity, spectral and input scaling for the CESN. The number of hidden (reservoir) units is 4096 neurons, and a decaying learning rate was used, an initial learning rate of 0.1 and  decaying factor of 0.1 is used for every $\frac{N_{epoch}}{5}$ step during training, where $N_{epoch}$ is the number of epochs. The sets of experiment were monitored using tensorboard and optimal parameters were selected based on the runs with the lowest stable loss, the hyperparameter search optimization was done for each dataset and the results are presented in Tables~\ref{table:cifar_10_hyperparameter},~\ref{table:cifar_100_hyperparameter},~\ref{table:BSD_hyperparameter} and~\ref{table:Weizmann_hyperparameter}. 
+\subsubsection{Data Augmentation And Preprocessing}
+\label{sec:data_augmentation_and_preprocessing}
 
-The total number of examples from the training LS generated dataset for WSD, BSD, CIFAR-10 and CIFAR-100 is 200 000, 500 000, 50 000 000 and 60 000 000, respectively. However due to the computational resources in terms of computing time, the CIFAR-10 and CIFAR-100 dataset were limited to 10 000 000. Each dataset was split into the training, validation and testing set of 80\%, 10\%and 10\%, respectively. In order to have a robust model we performed data augmentations on the input and target image, such a randomly flipping the image horizontally, vertically, random addition of Gaussian noise, and a set of random rotational angles $\{60^{\circ}, 90^{\circ}, 180^{\circ}, 270^{\circ}, 360^{\circ} \}$. The total number of epochs used is 500, with early stopping to prevent overfitting and a decaying learning rate of 0.1 for every 100th epoch by a decaying rate of 0.1. 
+The total number of generated LS examples for each database WSD, BSD, CIFAR-10 and CIFAR-100 is 200 000, 500 000, 50 000 000 and 60 000 000, respectively. However due to the computational resources constrained in terms of computing time, the CIFAR-10 and CIFAR-100 dataset were limited to 10 000 000. Each database was randomly split into the training, validation and testing set of 80\%, 10\% and 10\%, respectively. 
+In order to reduce the effect of overfitting we applied data augmentation. Before presenting an example to a model, we preprocess all the images by resizing them to 64$\times$64 pixels, randomly flipping the images horizontally, vertically with probability 50\%, adding Gaussian noise with a variance of 0.01 and randomly rotating the images for different angles $a \in \{60^{\circ}, 90^{\circ}, 180^{\circ}, 270^{\circ}, 360^{\circ} \}$. 
 
-The input images are normalize using the mean and the standard deviation of the entire dataset such that the pixels values are in range of $[0, 1]$.
+And lastly the input the pixels of the images $\mathbf{I}$ as shown in Figure~\ref{fig:input_image_reprentation} are normalized between 
+[-1, 1], as follows, 
 
+\begin{equation}
+    x = \frac{x - X_{mean}}{X_{std}}
+     \label{equ:normalization}
+\end{equation}
+
+where, x, $X_{mean}$  and $X_{std}$ is the input image, mean and standard deviation images of the entire training set. A total number of 500 epochs is used, with early stopping, to prevent overfitting.
 
 \newpage
-\section{Results and Discussion }
+
+\section{Results And Discussion }
 \label{sec:Experiments}
 
 \subsection{Introduction}
 
-
-
-In this chapter, we present the results, in order to deductively determine an approach best suited to learn the LS as described in Section~\ref{sec:image_segmentation}. We conduct a comparative study, where we compare the CESN against CRNN, CLSTM, CGRU and 3DCNN. The experiment are validated on both small datasets WSD and BSD and large datasets CIFAR-100 and CIFAR-10
-
+In this chapter the results of the experiments conducted for this dissertation will be presented. The features of these results will be discussed and important trends and anomalies will be brought to the reader's attention. We present a comparative study for learning the temporal and spatial evolution of the LS iterative image segmentation process as described in Section~\ref{sec:image_segmentation}, several statistical model are compared, namely,the CRNN, CLSTM, CGRU and 3DCNN all versus CESN, and also a detailed analysis of the CESN is also considered. The experiments are conducted using small databases, WSN and BSD, and larger databases CIFAR-100 and CIFAR-10.
 
 
 \subsection{Weizmann}
-In this experiment we consider a WSD database, where there is a clear distinction between the foreground and background, the images consist of one or two objects. Table~\ref{table:Weizmann_hyperparameter} shows the optimal parameters for each model selected based on it's performance on the validation set. The input images are resized to 64$\times$64, thus, the number of fully-connected units in and hidden units of CESN, CRNN, CLSTM, CGRU and 3DCNN is 4096, the optimal leaking rate, spectral radius, sparsity and input scaling for CESN are 0.0173, 0.9, 0.8 and 1, respectively. The optimal parameters are chosen by maximizing the IoU on the validation set.
+\label{sec:Weizmann}
+
+\subsubsection{Introduction}
+
+In this experiment we consider a WSD database, where there is a clear distinction between the foreground and background, the images consist of one or two objects. The database consist of 200 images in total and thus is the smallest database in our experiments.
+
+\subsubsection{Results And Discussion}
+
+Table~\ref{table:Weizmann_hyperparameter} shows the optimal parameters for each model selected based on the performance of the models~\footnote{CESN, CRNN, CLSTM, CGRU and 3DCNN are all referred as \textbf{models} for brevity.} on the validation set. The input images are resized to 64$\times$64, therefore, the number of fully-connected units in and hidden units for the CESN, CRNN, CLSTM, CGRU and 3DCNN is 4096, and the optimal leaking rate, spectral radius, sparsity and input scaling for CESN are 0.0173, 0.9, 0.8 and 1, respectively. The optimal parameters are chosen by maximizing the IoU on the validation set.
 
 \begin{table}[H]
     \centering
@@ -1808,7 +1831,10 @@ In this experiment we consider a WSD database, where there is a clear distinctio
     \label{table:Weizmann_hyperparameter}
 \end{table}
 
-Figure~\ref{fig:WEIZMANN_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set,  and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
+Figure~\ref{fig:WEIZMANN_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN versus the number of epochs (i.e. data passes). The training and validation loss are decreasing with further training, and since the validation loss is slightly greater than training loss, this means that the models are able to generalise on unseen observation and mostly likely to not overfit on the training set, the reasons are twofold, 1) decaying learning rate which helps the models converge to local minima and avoid oscillations~\cite{you2019does}, 2) dropout connection with a probability of 50\% between the convolutional layers help with overfitting, especially when working deep learning models that have large number of parameters as the one considered in this study~\cite{hinton2012improving}.
+
+
+All the models the loss is decreasing with different magnitudes, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN validation loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance. These curves are used to monitor overfitting and underfitting during training, however, since we implemented early stopping to stop the training when overfitting occurs, overfitting is not likely to occur due to training, that is not to say it won't occur due to the model complexity.
 
 \begin{figure}[H]
 \centering
@@ -1817,11 +1843,15 @@ Figure~\ref{fig:WEIZMANN_model_loss} shows the training and validation loss of t
  \label{fig:WEIZMANN_model_loss}
 \end{figure}
 
-Figure~\ref{fig:WEIZMANN_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models~\footnote{CESN, CRNN, CLSTM, CGRU and 3DCNN are all referred as \textbf{models} for brevity.} start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
 
-Lets look at the precision and recall curves, the precision is higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, one major reason for this is due to the noise in relation to the number of training examples in the data, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training process. 
+Figure~\ref{fig:WEIZMANN_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this can be attributed a small learning rate as a result of the decaying rate.
 
-Now lets look at the $F_{1}Score$ and IoU, clearly the model are penalized more for incorrect classified segmentation, this is seen from $\approx$ 10\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
+In Figure~\ref{fig:WEIZMANN_model_perfomance}, the precision is higher than the recall for all the models, this implies that the models more sensitive to undersegmentation than oversegmentation~\cite{sigut2015over, troya2015unsupervised}, the latter can be due to the proportion of noise introduced by resizing the images or the scattered debris LS from previous time steps given that the data size in small. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training procedure.
+
+The $F_{1}Score$ is higher than the IoU in Figure~\ref{fig:WEIZMANN_model_perfomance}, this is because the models are penalized more for incorrectly classified segmentations boundaries. The CGRU has the highest $F_{1}Score$ followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better monotonically than CLSTM with further training, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN and the increased data samples compared to WSD.
+
+The ESN and CRNN have the lowest IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise because of their inability to capture the long-term memory, therefore having a local spatial-temporal view of the LS evolution. While the, CLSTM, CGRU and 3DCNN are able to capture both the spatial-temporal evolution of the LS, therefore LS foreground pixels from earlier time step are now seen as noise, this is due to the ability of the CLSTM, CGRU and 3DCNN to capture the short-term and long-term memory, therefore having a global spatial-temporal view of the LS evolution.
+
 
 \begin{figure}[H]
 \centering
@@ -1830,8 +1860,9 @@ Now lets look at the $F_{1}Score$ and IoU, clearly the model are penalized more 
  \label{fig:WEIZMANN_model_perfomance}
 \end{figure}
 
-Table~\ref{tab:weizmann} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is doing worse than random noise with IoU of 21.9\%, and the CRNN with a  IoU of 37.4\%. The top three performing model are CGRU IoU of 64.3\%, 3DCNN IoU of 61.9\% and CLSTM IoU of 61.6\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting, given that the data samples are small.
- 
+Table~\ref{tab:weizmann} shows the performance of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, white noise is measured in order to determine the proportion of pixels that are considered to be random noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. Basically, this means the predictability of our models is benchmarked between being able to learn the spatio-temporal evolution of the LS or being a sequence of random numbers, therefore, cannot be predicted.  
+
+The CESN is not performing better than random with a IoU of 21.9\%, and the CRNN with a IoU of 37.4\%. The CGRU with a IoU of 64.3\% outperforms all the other models, followed by,  the 3DCNN with a IoU of 61.9\% and CLSTM with a IoU of 61.6\%. The reason that CESN and CRNN are unable to effectively capture the spatio-temporal evolution of the LS as compare to the CGRU, CLSTM and 3DCNN, is due to their short-term memory, such that, for short-term memory the LS pixels are have similar characteristics to random noise, since the final segmentation state of the LS is dependent on both the information of the initial states and the current state of the LS, therefore, model which are able to capture both long-term and short-term memory have a advantage. 
 
 \begin{table}[H]
 \centering
@@ -1841,18 +1872,19 @@ Table~\ref{tab:weizmann} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on t
     \hline
     \textbf{Methods} & \textbf{IoU} &  \textbf{Precision} &  \textbf{Recall} & \textbf{$F_{1}Score$}  \\
     \hline
-    CGRU 	& 	\textbf{64.3} &	\textbf{76.8} &	\textbf{79.3} &	\textbf{76.8}\\
-    3DCNN 	&	61.9 &	75.5 &	77.0 &	76.0\\
-    CLSTM 	& 	61.6 &	75.5 &	79.2 &	75.7\\
-    CRNN 	& 	37.4 &	60.6 &	66.5 &	63.7\\
-    CESN 	& 	21.9 &	53.0 &	63.2 &	58.0\\
- 	White Noise &35.4 & 50.0 &   50.0  & 48.2\\
+    CGRU 	& 	\textbf{64.3}\% &	\textbf{76.8}\% &	\textbf{79.3} &	\textbf{76.8}\%\\
+    3DCNN 	&	61.9\% &	75.5\% &	77.0\% &	76.0\% \\
+    CLSTM 	& 	61.6\% &	75.5\% &	79.2\% &	75.7\% \\
+    CRNN 	& 	37.4\% &	60.6\% &	66.5\% &	63.7\% \\
+    CESN 	& 	21.9\% &	53.0\% &	63.2\% &	58.0\% \\
+ 	White Noise &35.4\% & 50.0\% &   50.0\%  & 48.2\% \\
     	\hline
     \end{tabular}}
     \label{tab:weizmann}
 \end{table}
 
-Figure~\ref{fig:sample_results_weizamann} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the boundaries of the segmentation, this likely due to the noise. The CRNN, CLSTM and CGRU are able to capture the boundaries, however, suffer from over-segmentation, and they are able to segment single-object but struggle with multi-objects. This is also observed for the 3DCNN.
+
+Figure~\ref{fig:sample_results_weizamann} shows samples segmentation the 1$^{st}$, 2$^{nd}$, 3$^{rd}$, 4$^{th}$, 5$^{th}$, 6$^{th}$ and 7$^{th}$ columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the boundaries of the segmentation, this likely due to the noise. The CRNN, CLSTM and CGRU are able to capture the boundaries, however, suffer from over-segmentation as seen from a larger recall than precision in Table~\ref{tab:weizmann}.
 
 \begin{figure}[H]
 \centering
@@ -1861,26 +1893,32 @@ Figure~\ref{fig:sample_results_weizamann} shows samples segmentation, first, sec
  \label{fig:sample_results_weizamann}
 \end{figure}
 
+% Our results when compared to the state of the art when coming to reformulating LS as deep learning models
+
 % \begin{figure}[H]
 % \centering
 %   \includegraphics[width=1\linewidth]{Figure/Results/WEIZMANN_1_sample_images.png}
 %  \caption{WSD sample iterative segmentation.  $1^{st}$ row input image, $2^{nd}$ row Chan-Vese, $3^{rd}$ row CESN ,  $4^{th}$ row CLSTM, $5^{th}$ row CGRU, $6^{th}$ row CRNN and  $7^{th}$ row 3DCNN at  \textit{1th, 10th and 50th} iteration, respectively.}
 %  \label{fig:sample_results_weizmann}
 % \end{figure}
-\subsubsection{Discussion}
-
-
 \subsubsection{Conclusion}
 
+The CGRU outperforms the 3DCNN, CLSTM and CRNN, this due is to that CGRU is less complex because of less gates than the CLSTM and the CLSTMs requires a lot of data for it to be able generalize. The CRNN is known for exploding and vanishing gradients~\cite{pascanu2013difficulty} and considering that the data size is small, the results are not surprising. The CESN is not performing better than random as seen in Table~\ref{tab:weizmann}, this is likely due to the fact the set the of parameters, especially the leaking and spectral radius, do not satisfy the echo state property mention in Section~\ref{sec:echo_state_property_and_spectral_radius}, and also optimizing  large reservoirs of orders of magnitude 10$^3$ is challenging~\cite{jaeger2001echo}. The CESN although is a efficient alternative to training RNNs, however, optimal performance is not guaranteed due to the number of hyperprameters that need to be optimized and therefore does not perform better than state of the art RNNs under this experiment.
 
 
-\newpage
+% \newpage
 % ========================================================================= %
 % ========================================================================= %
 
 \subsection{BSD}
+\label{sec:BSD}
 
-In this experiment we used the Berkeley segmentation database, images in this dataset do not have well defined boundaries and can contains more than 2 objects. Therefore the dataset is more complex compared to the WSD dataset. Table~\ref{table:BSD_hyperparameter} shows the optimal parameters for each model selected based on the validation set. The number of 500 epochs was used with a decaying learning rate of 0.1 for every 100th epochs by a decaying rate of 0.1.
+\subsubsection{Introduction}
+In this experiment we used the Berkeley segmentation database, images in this dataset do not have well defined boundaries and can contains more than 2 overlapping objects. Therefore the database is more complex compared and has more samples than WSD database.
+
+\subsubsection{Results And Discussion}
+
+Table~\ref{table:BSD_hyperparameter} shows the optimal parameters for each model selected based on the performance of the models~\footnote{CESN, CRNN, CLSTM, CGRU and 3DCNN are all referred as \textbf{models} for brevity.} on the validation set. The input images are resized to 64$\times$64, therefore, the number of fully-connected units in and hidden units for the CESN, CRNN, CLSTM, CGRU and 3DCNN is 4096, and the optimal leaking rate, spectral radius, sparsity and input scaling for CESN are 0.113, 0.7, 0.8 and 0.5, respectively. The optimal parameters are chosen by maximizing the IoU on the validation set.
 
 \begin{table}[H]
     \centering
@@ -1890,7 +1928,7 @@ In this experiment we used the Berkeley segmentation database, images in this da
     \hline
     \textbf{Model} &  \textbf{Hidden size} & \textbf{Leaking rate} & \textbf{Sparsity} & \textbf{Spectral radius} & \textbf{Input scaling}\\
     \hline
-      CESN   & 4096   & 0.0713   &  0.8  &  0.8  & 0.5 \\
+      CESN   & 4096   & 0.113   &  0.8  &  0.7  & 0.5 \\
       CRNN   & 4096  & -         &  -  &  -  & -  \\
       CLSTM  & 4096   &           &  -  &  -  & -   \\
       CGRU   & 4096  & -      &  -  &  -  & -    \\
@@ -1901,7 +1939,15 @@ In this experiment we used the Berkeley segmentation database, images in this da
     \label{table:BSD_hyperparameter}
 \end{table}
 
-Figure~\ref{fig:BSD_model_loss} shows the training and validation  loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set, and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
+
+
+Figure~\ref{fig:BSD_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN versus the number of epochs (i.e. data passes). The training and validation loss are decreasing with further training, and since the validation loss is slightly greater than training loss, this means that the models are able to generalise on unseen observation and mostly likely to not overfit on the training set, the reasons are twofold, 1) decaying learning rate which helps the models converge to local minima and avoid oscillations~\cite{you2019does}, 2) dropout connection with a probability of 50\% between the convolutional layers help with overfitting, especially when working deep learning models that have large number of parameters as the one considered in this study~\cite{hinton2012improving}.
+
+
+All the models the loss is decreasing with different magnitudes, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN validation loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance. These curves are used to monitor overfitting and underfitting during training, however, since we implemented early stopping to stop the training when overfitting occurs, overfitting is not likely to occur due to training, that is not to say it won't occur due to the model complexity.
+
+
+% Figure~\ref{fig:BSD_model_loss} shows the training and validation  loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set, and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
 
 \begin{figure}[H]
 \centering
@@ -1909,11 +1955,21 @@ Figure~\ref{fig:BSD_model_loss} shows the training and validation  loss of the C
 \caption{BSD dataset validadion loss curves for the CESN, CLSTM, CGRU, CRNN and 3DCNN.} \label{fig:BSD_model_loss}
 \end{figure}
 
-Figure~\ref{fig:BSD_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+Figure~\ref{fig:BSD_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this can be attributed a small learning rate as a result of the decaying rate.
 
-Lets look at the precision and recall curves, the precision is higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, one major reason for this is due to the noise in relation to the number of training examples in the data, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training process. 
+In Figure~\ref{fig:BSD_model_perfomance}, the precision is higher than the recall for all the models, this implies that the models more sensitive to undersegmentation than oversegmentation~\cite{sigut2015over, troya2015unsupervised}, the latter can be due to the proportion of noise introduced by resizing the images or the scattered debris LS from previous time steps given that the data size in small. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training process.
 
-Now lets look at the $F_{1}Score$ and IoU, clearly the model are penalized more for incorrect classified segmentation, this is seen from $\approx$ 10\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
+The $F_{1}Score$ is higher than the IoU in Figure~\ref{fig:BSD_model_perfomance}, this is because the models are penalized more for incorrectly classified segmentations boundaries. The CGRU has the highest $F_{1}Score$ followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. 
+
+The ESN and CRNN have the lowest IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise because of their inability to capture the long-term memory, therefore having a local spatial-temporal view of the LS evolution. While the, CLSTM, CGRU and 3DCNN are able to capture both the spatial-temporal evolution of the LS, therefore LS foreground pixels from earlier time step are now seen as noise, this is due to the ability of the CLSTM, CGRU and 3DCNN to capture the short-term and long-term memory, therefore having a global spatial-temporal view of the LS evolution.
+
+
+
+% Figure~\ref{fig:BSD_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+
+% Lets look at the precision and recall curves, the precision is higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, one major reason for this is due to the noise in relation to the number of training examples in the data, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training process. 
+
+% Now lets look at the $F_{1}Score$ and IoU, clearly the model are penalized more for incorrect classified segmentation, this is seen from $\approx$ 10\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
 
 \begin{figure}[H]
 \centering
@@ -1922,8 +1978,11 @@ Now lets look at the $F_{1}Score$ and IoU, clearly the model are penalized more 
 \end{figure}
 
 
+Table~\ref{tab:bsd500} shows the performance of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, white noise is measured in order to determine the proportion of pixels that are considered to be random noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. Basically, this means the predictability of our models is benchmarked between being able to learn the spatio-temporal evolution of the LS or being a sequence of random numbers, therefore, cannot be predicted.  
 
-Table~\ref{tab:bsd500} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is doing worse than random noise with IoU of 37.5\%, and the CRNN with a IoU of 49.7\%. The top three performing model are CGRU IoU of 56.7\%, 3DCNN IoU of 53.5\% and CLSTM IoU of 54.8\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting, given that the data samples are small.
+The CESN is not performing better than random with a IoU of 37.5\%. The CGRU with a IoU of 56.7\% outperforms all the other models, followed by, the CLSTM with a IoU of 54.8\%, 3DCNN with a IoU of 53.5\% and CRNN with a IoU of 49.7\% . Even with more data the CESN is still unable capture the spatio-temporal evolution of the LS as compare to the CGRU, CLSTM, CRNN and 3DCNN, is due to it's short-term memory, such that, for short-term memory the LS pixels are have similar characteristics to random noise, since the final segmentation state of the LS is dependent on both the information of the initial states and the current state of the LS, therefore, model which are able to capture both long-term and short-term memory have a advantage. More data certainly improved the CRNN segmentation results as seen in  Figure~\ref{fig:sample_results_BSD}.
+
+% Table~\ref{tab:bsd500} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is doing worse than random noise with IoU of 37.5\%, and the CRNN with a IoU of 49.7\%. The top three performing model are CGRU IoU of 56.7\%, 3DCNN IoU of 53.5\% and CLSTM IoU of 54.8\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting, given that the data samples are small.
  
 \begin{table}[H]
 \centering
@@ -1933,19 +1992,21 @@ Table~\ref{tab:bsd500} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the
     \hline
     \textbf{Method} & \textbf{IoU} &  \textbf{Precision} &  \textbf{Recall} & \textbf{$F_{1}Score$}           \\
     \hline
-    CGRU 	& 	\textbf{56.7} &	\textbf{73.4} &	\textbf{76.1} &	\textbf{73.6}\\
-    CLSTM 	& 	54.8 &	71.1 &	73.4 &	71.4\\
-    3DCNN 	& 	53.5 &	70.7 &	73.1 &	71.0\\
-    CRNN 	& 	49.7 &	69.4 &	71.8 &	70.1\\
-    CESN 	& 	37.5 &	60.0 &	61.1 &	62.0\\
- 	White Noise  &  44.9   & 50.0  &   50.0 &  43.4    \\
+    CGRU 	& 	\textbf{56.7}\% &	\textbf{73.4}\% &	\textbf{76.1}\% &	\textbf{73.6}\% \\
+    CLSTM 	& 	54.8\% &	71.1\% &	73.4\% &	71.4\% \\
+    3DCNN 	& 	53.5\% &	70.7\% &	73.1\% &	71.0\% \\
+    CRNN 	& 	49.7\% &	69.4\% &	71.8\% &	70.1\% \\
+    CESN 	& 	37.5\% &	60.0\% &	61.1\% &	62.0\% \\
+ 	White Noise  &  44.9\%   & 50.0\%  &   50.0\% &  43.4\%    \\
     	\hline
     \end{tabular}}
     \label{tab:bsd500}
 \end{table}
 
-Figure~\ref{fig:sample_results_BSD} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the boundaries of the segmentation, this likely due to the noise. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented . Dealing with overlapping objects
-is a challenge for all the models.
+Figure~\ref{fig:sample_results_BSD} shows samples segmentation the 1$^{st}$, 2$^{nd}$, 3$^{rd}$, 4$^{th}$, 5$^{th}$, 6$^{th}$ and 7$^{th}$ columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the boundaries of the segmentation, the noise has an impact on segmentation results as seen by the disjoint regions. The CRNN, CLSTM and CGRU are able to capture the boundaries especially for non-overlapping objects, but due to over-segmentation as seen from a larger recall than precision in Table~\ref{tab:bsd500}, the boundaries are not well-defined.
+
+% Figure~\ref{fig:sample_results_BSD} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the boundaries of the segmentation, this likely due to the noise. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented . Dealing with overlapping objects
+% is a challenge for all the models.
 
 \begin{figure}[H]
 \centering
@@ -1964,8 +2025,13 @@ is a challenge for all the models.
 %  \label{fig:sample_results_BSD}
 % \end{figure}
 
+% The CGRU outperforms the 3DCNN, CLSTM and CRNN, this due is to that CGRU is less complex because of less gates than the CLSTM and the CLSTMs requires a lot of data for it to be able generalize. The CRNN is known for exploding and vanishing gradients~\cite{pascanu2013difficulty} and considering that the data size, the results are not surprising. The CESN is still not performing better than chance as seen in Table~\ref{tab:bsd500}, this is likely due to the fact the set the of parameters, especially the leaking and spectral radius, do not satisfy the echo state property mention in Section~\ref{sec:echo_state_property_and_spectral_radius}, and also optimizing  large reservoirs of orders of magnitude 10$^3$ is challenging~\cite{jaeger2001echo}.  
 
 \subsubsection{Conclusion}
+
+The CGRU outperforms the 3DCNN, CLSTM and CRNN. The additional data samples improved the CGRU, 3DCNN, CLSTM and CRNN segmentation resutls when compared to the previous experiment in Section~\ref{sec:Weizmann}, with a exception of the CESN. 
+
+The CESN is still not performing better than random as seen in Table~\ref{tab:bsd500}, this is due to the selected set of parameters do not satisfy the echo state property mention in Section~\ref{sec:echo_state_property_and_spectral_radius}, especially the leaking and spectral radius, and also optimizing large reservoirs of orders of magnitude 10$^3$ is challenging~\cite{jaeger2001echo}. The CESN although is a efficient alternative to training RNNs, however, optimal performance is not guaranteed due to the number of hyperprameters that need to be optimized and therefore does not perform better than state-of-the-art RNNs under the conditions of this experiment.
 
 \newpage
 
@@ -1973,9 +2039,14 @@ is a challenge for all the models.
 % ========================================================================= %
 
 \subsection{CIFAR-10}
+\label{sec:cifar_10}
 
-In this experiment, we used the CIFAR-10 database, this dataset is much more complex that the previous datasets mentioned above, the additional complexity is due number of different classes and significantly larger sample than the BSD and WSD. Figure~\ref{table:cifar_10_hyperparameter}, shows the optimal parameters for each model based on the validations set. The number of 500 epochs was used with a decaying learning rate of 0.1 for every 100th epochs by a decaying rate of 0.1.
+\subsubsection{Introduction}
 
+In this experiment, we used the CIFAR-10 database, this database is much more complex that the previous database mentioned above, the additional complexity is due number of different classes and significantly larger sample than the BSD and WSD.
+
+\subsubsection{Result And Discussion}
+Table~\ref{table:cifar_10_hyperparameter} shows the optimal parameters for each model selected based on the performance of the models~\footnote{CESN, CRNN, CLSTM, CGRU and 3DCNN are all referred as \textbf{models} for brevity.} on the validation set. The input images are resized to 64$\times$64, therefore, the number of fully-connected units in and hidden units for the CESN, CRNN, CLSTM, CGRU and 3DCNN is 4096, and the optimal leaking rate, spectral radius, sparsity and input scaling for CESN are 0.01, 0.7, 0.2 and 1, respectively. The optimal parameters are chosen by maximizing the IoU on the validation set.
 
 \begin{table}[!htb]
     \centering
@@ -1985,7 +2056,7 @@ In this experiment, we used the CIFAR-10 database, this dataset is much more com
     \hline
     \textbf{Model} &  \textbf{Hidden size} & \textbf{Leaking rate} & \textbf{Sparsity} & \textbf{Spectral radius} & \textbf{Input scaling}\\
     \hline
-      CESN  & 4096  & 0.8  & 0.8  &  0.8  & 1.0    \\
+      CESN  & 4096  & 0.01  & 0.2  &  0.9  & 1.0    \\
       CRNN  & 4096 & -  & -  &  -  & -             \\
       CLSTM & 4096  &    & -  &  -  & -            \\
       CGRU  & 4096 & -  & -  &  -  & -              \\
@@ -1995,8 +2066,11 @@ In this experiment, we used the CIFAR-10 database, this dataset is much more com
     \label{table:cifar_10_hyperparameter}
 \end{table}
 
+Figure~\ref{fig:cifar_10_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN versus the number of epochs (i.e. data passes). The training and validation loss are decreasing with further training, and since the validation loss is slightly greater than training loss, this means that the models are able to generalise on unseen observation and mostly likely to not overfit on the training set, the reasons are twofold, 1) decaying learning rate which helps the models converge to local minima and avoid oscillations~\cite{you2019does}, 2) dropout connection with a probability of 50\% between the convolutional layers help with overfitting, especially when working deep learning models that have large number of parameters as the one considered in this study~\cite{hinton2012improving} 3) training with more data.
 
-Figure~\ref{fig:cifar_10_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set, and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU, CRNN and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
+
+All the models the loss is decreasing with different magnitudes, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU and 3DCNN validation loss curves are very close to each other, and exhibit similar trend, which means they are more likely to have the similar performance. These curves are used to monitor overfitting and underfitting during training, however, since we implemented early stopping to stop the training when overfitting occurs, overfitting is not likely to occur due to training, that is not to say it won't occur due to the model complexity. The CESN training and validation loss are almost equal, which is a hallmark of overfitting, however, without further training beyond 500 epoch we are unable to validate this assumption.
+
 
 \begin{figure}[H]
 \centering
@@ -2005,11 +2079,23 @@ Figure~\ref{fig:cifar_10_model_loss} shows the training and validation loss of t
  \label{fig:cifar_10_model_loss}
 \end{figure}
 
-Figure~\ref{fig:cifar_10_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+Figure~\ref{fig:cifar_10_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this can be attributed a small learning rate as a result of the decaying rate.
 
-Lets look at the precision and recall curves, the precision is sightly higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, CRNN, 3DCNN and lastly the CESN throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and  3DCNN converge towards a single recall and precision, this is not surprising, since these model require large amounts of data in order to achieve state of the art results. The number of parameters of the CESN make it difficult to find the optimal parameters such the echo state property is satisfied, which then lead to sub-optimal performance.
+In Figure~\ref{fig:cifar_10_model_perfomance}, the precision is slightly higher than the recall for all the models, this implies that the models slightly more sensitive to undersegmentation than oversegmentation~\cite{sigut2015over, troya2015unsupervised}, the latter can be due to the proportion of noise introduced by up-resizing the images. The CGRU has the highest precision and recall, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and 3DCNN converge towards a single recall and precision, this is not surprising, since these models require large amounts of data in order to achieve state-of-the-art results.
 
-Now lets look at the $F_{1}Score$ and IoU, clearly the modes are slightly penalized more for incorrect classified segmentation, this is seen from $\approx$ 5\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
+The $F_{1}Score$ is higher than the IoU in Figure~\ref{fig:cifar_10_model_perfomance}, this is because the models are penalized more for incorrectly classified segmentations boundaries. %The CGRU has the highest $F_{1}Score$ followed by, CRNN, CLSTM, 3DCNN and lastly the CESN.  
+
+
+The ESN have the lowest IoU and $F_{1}Score$, this is because the CESN is is still sensitive to the noise because of their inability to capture the long-term memory even with more training data, therefore having a local spatial-temporal view of the LS evolution. While the, CLSTM, CGRU, CRNN and 3DCNN are able to capture both the spatial-temporal evolution of the LS, therefore LS foreground pixels from earlier time step are now seen as noise, this is due to the ability of the CLSTM, CGRU and 3DCNN to capture the short-term and long-term memory, therefore having a global spatial-temporal view of the LS evolution. In contrast to the CRNN exponentially improves in performance with more data.
+
+
+
+
+% Figure~\ref{fig:cifar_10_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+
+% Lets look at the precision and recall curves, the precision is sightly higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, CRNN, 3DCNN and lastly the CESN throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and  3DCNN converge towards a single recall and precision, this is not surprising, since these model require large amounts of data in order to achieve state of the art results. The number of parameters of the CESN make it difficult to find the optimal parameters such the echo state property is satisfied, which then lead to sub-optimal performance.
+
+% Now lets look at the $F_{1}Score$ and IoU, clearly the modes are slightly penalized more for incorrect classified segmentation, this is seen from $\approx$ 5\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
 
 \begin{figure}[H]
 \centering
@@ -2018,7 +2104,11 @@ Now lets look at the $F_{1}Score$ and IoU, clearly the modes are slightly penali
  \label{fig:cifar_10_model_perfomance}
 \end{figure}
 
-Table~\ref{tab:cifar_10} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is performing better than random noise with IoU of 44.9\%, and the CRNN with a IoU of 68\%. The top three performing model are CLSTM IoU of 68.8\%, 3DCNN IoU of 68.7\% and CGRU IoU of 68.0\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting or the upsampling $32\times32 \rightarrow 64\times64$ of the images which may introduced artifacts not part of the LS evolution.
+Table~\ref{tab:cifar_10} shows the performance of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, white noise is measured in order to determine the proportion of pixels that are considered to be random noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. Basically, this means the predictability of our models is benchmarked between being able to learn the spatio-temporal evolution of the LS or being a sequence of random numbers, therefore, cannot be predicted.  
+
+The CESN is performing better than random with a IoU of 44.7\%. The CLSTM with a IoU of 68.8\% outperforms all the other models, followed by, the 3DCNN with a IoU of 68.7\%, CGRU with a IoU of 68.3\% and CRNN with a IoU of 68.0\% . Even with a significant increase in data the CESN is still unable capture the spatio-temporal evolution of the LS as compare to the CGRU, CLSTM, CRNN and 3DCNN, due to overfitting  because of it's short-term memory, such that, for short-term memory the LS pixels are have similar characteristics to random noise, since the final segmentation state of the LS is dependent on both the information of the initial states and the current state of the LS, therefore, model which are able to capture both long-term and short-term memory have a advantage. 
+
+% Table~\ref{tab:cifar_10} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is performing better than random noise with IoU of 44.9\%, and the CRNN with a IoU of 68\%. The top three performing model are CLSTM IoU of 68.8\%, 3DCNN IoU of 68.7\% and CGRU IoU of 68.0\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting or the upsampling $32\times32 \rightarrow 64\times64$ of the images which may introduced artifacts not part of the LS evolution.
  
 \begin{table}[H]
 \centering
@@ -2028,18 +2118,23 @@ Table~\ref{tab:cifar_10} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on t
     \hline
     \textbf{Method} & \textbf{IoU} &  \textbf{Precision} &  \textbf{Recall} & \textbf{$F_{1}Score$}   \\
     \hline
-    CLSTM 	&  	\textbf{68.8} 	&\textbf{82.8} 	&\textbf{83.8} 	& \textbf{82.5}\\
-    3DCNN 	& 	68.7 	&82.5 	&83.4 	& 82.2\\
-    CGRU 	& 	68.3 	&82.4 	&83.0 	& 82.2\\
-    CRNN 	& 	68.0 	&81.9 	&82.9 	& 81.9\\
-    CESN 	& 	44.9 	&65.1 	&65.7 	& 66.4\\
- 	White Noise   & 30.3    & 50.   &  50.    &  49.5            \\
+    CLSTM 	&  	\textbf{68.8}\% 	&\textbf{82.8}\% 	&\textbf{83.8}\% 	& \textbf{82.5}\%\\
+    3DCNN 	& 	68.7\% 	&82.5\% 	&83.4\% 	& 82.2\%\\
+    CGRU 	& 	68.3\% 	&82.4\% 	&83.0\% 	& 82.2\%\\
+    CRNN 	& 	68.0\% 	&81.9\% 	&82.9\% 	& 81.9\%\\
+    CESN 	& 	44.9\% 	&65.1\% 	&65.7\% 	& 66.4\%\\
+ 	White Noise   & 30.3\%    & 50.0\%   &  50.0\%    &  49.5\%            \\
     	\hline
     \end{tabular}}
     \label{tab:cifar_10}
 \end{table}
 
-Figure~\ref{fig:sample_results_cifar10} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the time evolution of the LS, this seen from the cheakerbox like structures, which are present in the earlier time steps of the LS. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented. The CRNN, CLSTM, CGRU and 3DCNN as seen in the images are able to capture the temporal evolution of the LS.
+Figure~\ref{fig:sample_results_cifar10} shows samples segmentation the 1$^{st}$, 2$^{nd}$, 3$^{rd}$, 4$^{th}$, 5$^{th}$, 6$^{th}$ and 7$^{th}$ columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. We observe moderate overfitting characteristics, this is seen by the checkerbox structures in Figure~\ref{fig:sample_results_BSD}, since the LS is initialized as checkerbox, therefore this structures are common in all the samples in the data and the models are more likely to memorize these type of structures. 
+
+
+The CESN is unable to capture the boundaries of the segmentation, although it was able to separate the plane from the back in 5$^{th}$ row. The CRNN, CLSTM , CGRU and 3DCNN are able to capture the boundaries, but due to over-segmentation as seen from a larger recall than precision in Table~\ref{tab:bsd500}, the boundaries are not well-defined, this could be due to that the training was stopped prematurely.
+
+% Figure~\ref{fig:sample_results_cifar10} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the time evolution of the LS, this seen from the cheakerbox like structures, which are present in the earlier time steps of the LS. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented. The CRNN, CLSTM, CGRU and 3DCNN as seen in the images are able to capture the temporal evolution of the LS.
 
 \begin{figure}[H]
 \centering
@@ -2058,6 +2153,10 @@ Figure~\ref{fig:sample_results_cifar10} shows samples segmentation, first, secon
 
 \subsubsection{Conclusion}
 
+
+
+The CLSTM outperforms the 3DCNN, CGRU and CRNN. The additional data samples improved the CGRU, 3DCNN, CLSTM and CRNN segmentation resutls when compared to the previous two experiment in Section~\ref{sec:BSD} and ~\ref{sec:Weizmann}. The significant increase in the data, resulted in a exponentially improvement in the performance if the CRNN, however, the CESN displayed characteristics of overfitting.  This observation is due to the echo state property mentioned in Section~\ref{sec:echo_state_property_and_spectral_radius} not being satisfied. The CESN although is a efficient alternative to training RNNs, however, optimal performance is not guaranteed due to the number of hyperprameters that need to be optimized and therefore does not perform better than state-of-the-art RNNs under the conditions of this experiment.
+
 \newpage
 
 
@@ -2066,10 +2165,15 @@ Figure~\ref{fig:sample_results_cifar10} shows samples segmentation, first, secon
 % ========================================================================= %
 
 \subsection{CIFAR-100}
+\label{sec:cifar_100}
 
-In this experiment we used the CIFAR-100 database, which has 10 times more classes that the CIFAR-10 database. Table~\ref{table:cifar_100_hyperparameter} shows the optimal parameters for each model selected based on the validation set. The number of 500 epochs was used with a decaying learning rate of 0.1 for every 100th epochs by a decaying rate of 0.1.
+\subsubsection{Introduction}
 
+In this experiment we used the CIFAR-100 database, this database is much more complex that the previous databases due to the additional number classes and significantly larger sample than the BSD and WSD.
 
+\subsubsection{Result And Discussion}
+
+ Table~\ref{table:cifar_100_hyperparameter} shows the optimal parameters for each model selected based on the performance of the models~\footnote{CESN, CRNN, CLSTM, CGRU and 3DCNN are all referred as \textbf{models} for brevity.} on the validation set. The input images are resized to 64$\times$64, therefore, the number of fully-connected units in and hidden units for the CESN, CRNN, CLSTM, CGRU and 3DCNN is 4096, and the optimal leaking rate, spectral radius, sparsity and input scaling for CESN are 0.01, 0.7, 0.2 and 1, respectively. The optimal parameters are chosen by maximizing the IoU on the validation set.
 \begin{table}[H]
     \centering
         \caption{CIFAR-100 dataset optimal parameters for the CESN, CRNN, CLSTM, CGRU and 3DCNN}
@@ -2078,7 +2182,7 @@ In this experiment we used the CIFAR-100 database, which has 10 times more class
     \hline
     \textbf{Model} &  \textbf{Hidden size} & \textbf{Leaking rate} & \textbf{Sparsity} & \textbf{Spectral radius} & \textbf{Input scaling}\\
     \hline
-      CESN   & 4096   & 0.0713  & 0.8  &  0.9  & 1.0  \\
+      CESN   & 4096   & 0.0713  & 0.2  &  0.9  & 1.0  \\
       CRNN   & 4096   & -  & -  &  -  & -   \\
       CLSTM  & 4096   &    & -  &  -  & -    \\
       CGRU   & 4096   & -  & -  &  -  & -     \\
@@ -2088,31 +2192,47 @@ In this experiment we used the CIFAR-100 database, which has 10 times more class
     \label{table:cifar_100_hyperparameter}
 \end{table}
 
-Figure~\ref{fig:cifar_100_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set, and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU, CRNN and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
+Figure~\ref{fig:cifar_100_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN versus the number of epochs (i.e. data passes). The training and validation loss are decreasing with further training, and since the validation loss is slightly greater than training loss, this means that the models are able to generalise on unseen observation and mostly likely to not overfit on the training set, the reasons are twofold, 1) decaying learning rate which helps the models converge to local minima and avoid oscillations~\cite{you2019does}, 2) dropout connection with a probability of 50\% between the convolutional layers help with overfitting, especially when working deep learning models that have large number of parameters as the one considered in this study~\cite{hinton2012improving} 3) training with more data.
+
+
+All the models the loss is decreasing with some observer exception especially for CRNN, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CESN and lastly the CRNN. The CRNN in the early stages (i.e. $\approx$ 100 epochs)of training the loss in increasing, this mostly likely due the vanishing and exploding gradients~\cite{pascanu2013difficulty} mentioned in Section~\ref{sec:Recurrent_Neural_Networks}. And CGRU and 3DCNN validation loss curves are very close to each other, and exhibit similar trend, which means they are more likely to have the similar performance. These curves are used to monitor overfitting and underfitting during training, however, since we implemented early stopping to stop the training when overfitting occurs.
+
+% Figure~\ref{fig:cifar_100_model_loss} shows the training and validation loss of the CESN, CRNN, CLSTM, CGRU and 3DCNN against the number of epochs. The training and validation loss are decreasing with further training, this means that the models are not overfitting on the training set, and for all the models the loss is decreasing with different magnitude, this is a direct indications of the ability of the models to learn the LS function, the CGRU has the lowest validation loss, followed by, CLSTM, 3DCNN, CRNN and lastly the CESN. The CESN has the lowest starting loss, however a lower rate of change in loss compared to CRNN, CLSTM, CGRU and 3DCNN. And CLSTM, CGRU, CRNN and 3DCNN loss curves are close to each other, and exhibit similar trend, which means they are more likely to have the similar performance.
 
 \begin{figure}[H]
 \centering
-  \includegraphics[width=1\textwidth]{Figure/Results/CIFAR_10_loss.png}
+  \includegraphics[width=1\textwidth]{Figure/Results/CIFAR_100_loss.png}
 \caption{CIFAR-100 validation dataset learning curves for the CESN, CLSTM, CGRU, RNN and 3DCNN}
  \label{fig:cifar_100_model_loss}
 \end{figure}
 
+Figure~\ref{fig:cifar_10_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. The CESN, CLSTM, CGRU and 3DCNN start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this can be attributed a small learning rate as a result of the decaying rate. The CRNN performance drop with further training, this phenomenon is due to the the high rate rate, which causes the network to become unstable and results in vanishing and exploding gradients~\cite{pascanu2013difficulty}. The decaying learning rate procedure resolves the vanishing and exploding gradients of the CRNN as a stable increase in the precision, recall, $F_{1}Score$ and IoU~\cite{you2019does}.
 
-Figure~\ref{fig:cifar_100_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+In Figure~\ref{fig:cifar_10_model_perfomance}, the precision is slightly higher than the recall for all the models, this implies that the models slightly more sensitive to undersegmentation than oversegmentation~\cite{sigut2015over, troya2015unsupervised}, the latter can be due to the proportion of noise introduced by up-resizing the images. The CGRU has the highest precision and recall, followed by, 3DCNN, CLSTM, CESN and lastly CRNN the  throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and 3DCNN converge towards a single recall and precision, this is not surprising, since these models require large amounts of data in order to achieve state-of-the-art results.
 
-Lets look at the precision and recall curves, the precision is sightly higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, CRNN, 3DCNN and lastly the CESN throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and  3DCNN converge towards a single recall and precision, this is not surprising, since these model require large amounts of data in order to achieve state of the art results. The number of parameters of the CESN make it difficult to find the optimal parameters such the echo state property is satisfied, which then lead to sub-optimal performance.
+The $F_{1}Score$ is higher than the IoU in Figure~\ref{fig:cifar_10_model_perfomance}, this is because the models are penalized more for incorrectly classified segmentations boundaries. The CRNN have the lowest IoU and $F_{1}Score$, this is due to the unstable gradients during back-propagation~\cite{pascanu2013difficulty}. While the, CLSTM, CGRU and 3DCNN are able to capture both the spatial-temporal evolution of the LS, therefore LS foreground pixels from earlier time step are now seen as noise, this is due to the ability of the CLSTM, CGRU and 3DCNN to capture the short-term and long-term memory, therefore having a global spatial-temporal view of the LS evolution. The CESN is performing better than CRNN, and this advantages is due the de-coupling of the sparse reservoir and readout layer during training and as such does not suffer from the vanishing and exploding gradients~\cite{jaeger2001echo,jaeger2002tutorial,lukovsevivcius2009reservoir}.
 
-Now lets look at the $F_{1}Score$ and IoU, clearly the modes are slightly penalized more for incorrect classified segmentation, this is seen from $\approx$ 5\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
+
+% Figure~\ref{fig:cifar_100_model_perfomance} shows the precision, recall, $F_{1}Score$ and IoU of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the validation set. All the models start with a lower performance with a single pass of the data, with further training the models performance increases and until it becomes constant at which further training does not make performance better or worse, this is mostly due to the a small learning rate or size of the training data.
+
+% Lets look at the precision and recall curves, the precision is sightly higher than the recall for all the models, this means that the models are more likely to under-segment than over-segment the image, therefore the models ability to capture finer changes of the LS such that they are different from the noise is challenging. The CGRU has the highest precision and recall, followed by, CLSTM, CRNN, 3DCNN and lastly the CESN throughout the entire training process. The most interesting observation, is the CGRU, CLSTM, CRNN and  3DCNN converge towards a single recall and precision, this is not surprising, since these model require large amounts of data in order to achieve state of the art results. The number of parameters of the CESN make it difficult to find the optimal parameters such the echo state property is satisfied, which then lead to sub-optimal performance.
+
+% Now lets look at the $F_{1}Score$ and IoU, clearly the modes are slightly penalized more for incorrect classified segmentation, this is seen from $\approx$ 5\% higher $F_{1}Score$ than IoU. The CGRU has the highest $F_{1}Score$ has the highest  followed by, CLSTM, 3DCNN, CRNN and lastly the CESN, but, when is comes to IoU 3DCNN is better than CLSTM, this might be related to boundaries of the segmentation not clearly defined compare to the 3DCNN. The ESN has the worst IoU and $F_{1}Score$, this is because the CESN is more sensitive to the noise and therefore unable to capture the spatial evolution of the LS, while the other CRNN, CLSTM, CGRU and 3DCNN are able to capture both the spatial and temporal evolution of the LS.
 
 
 \begin{figure}[H]
 \centering
-  \includegraphics[width=1\textwidth]{Figure/Results/CIFAR_10_performance.png}
+  \includegraphics[width=1\textwidth]{Figure/Results/CIFAR_100_performance.png}
 \caption{CIFAR-100 validation dataset learning curves for the CESN, CLSTM, CGRU, RNN and 3DCNN}
  \label{fig:cifar_100_model_perfomance}
 \end{figure}
 
-Table~\ref{tab:cifar_100} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is performing better than random noise with IoU of 44.5\%, and the CRNN with a IoU of 48.7\%. The top three performing model are CGRU IoU of 71.5\%, 3DCNN IoU of 69.4\% and CLSTM IoU of 65.3\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting or the upsampling $32\times32 \rightarrow 64\times64$ of the images which may introduced artifacts not part of the LS evolution.
+
+Table~\ref{tab:cifar_100} shows the performance of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, white noise is measured in order to determine the proportion of pixels that are considered to be random noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. Basically, this means the predictability of our models is benchmarked between being able to learn the spatio-temporal evolution of the LS or being a sequence of random numbers, therefore, cannot be predicted.  
+
+The CESN is performing better than random with a IoU of 44.5\%. The CGRU with a IoU of 71.5\% outperforms all the other models, followed by, the 3DCNN with a IoU of 69.4\%, CLSTM with a IoU of 65.3\% and CRNN with a IoU of 48.7\% . Even with a significant increase in data the CESN is still unable capture the spatio-temporal evolution of the LS as compare to the CGRU, CLSTM, CRNN and 3DCNN, due to overfitting  because of it's short-term memory, such that, for short-term memory the LS pixels are have similar characteristics to random noise, since the final segmentation state of the LS is dependent on both the information of the initial states and the current state of the LS, therefore, model which are able to capture both long-term and short-term memory have a advantage. 
+
+% Table~\ref{tab:cifar_100} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on the testing set. In addition, we added random noise to measure the proportion of noise in the testing set, about 50\% of the the foreground pixels are noise as seen from the recall. The CESN is performing better than random noise with IoU of 44.5\%, and the CRNN with a IoU of 48.7\%. The top three performing model are CGRU IoU of 71.5\%, 3DCNN IoU of 69.4\% and CLSTM IoU of 65.3\%. On the testing set we can see that recall is larger than the precision, which means the models are over-segmenting the images, this may be due to over-fitting or the upsampling $32\times32 \rightarrow 64\times64$ of the images which may introduced artifacts not part of the LS evolution.
 
 
 \begin{table}[H]
@@ -2123,19 +2243,22 @@ Table~\ref{tab:cifar_100} shows the of the CESN, CRNN, CLSTM, CGRU and 3DCNN on 
     \hline
     \textbf{Method} & \textbf{IoU} &  \textbf{Precision} &  \textbf{Recall} & \textbf{$F_{1}Score$}    \\
     \hline
-CGRU 	&	\textbf{71.5} &	\textbf{84.2} &	\textbf{85}.0 &	\textbf{83.9}\\
-3DCNN 	 &	69.4 &	82.8 &	84.0 &	82.6\\
-CLSTM 	 &	65.3 &	79.9 &	81.8 &	79.8\\
-CRNN 	 &	48.7 &	68.0 &	69.3 &	69.7\\
-CESN 	 &	44.5 &	64.8 &	65.4 &	66.0\\
-White Noise   & 30.2    & 50.0      & 50.0    & 49.5  \\
+CGRU 	&	\textbf{71.5}\% &	\textbf{84.2}\% &	\textbf{85}.0\% &	\textbf{83.9}\%\\
+3DCNN 	 &	69.4\% &	82.8\% &	84.0\% &	82.6\%\\
+CLSTM 	 &	65.3\% &	79.9\% &	81.8\% &	79.8\%\\
+CRNN 	 &	48.7\% &	68.0\% &	69.3\% &	69.7\%\\
+CESN 	 &	44.5\% &	64.8\% &	65.4\% &	66.0\%\\
+White Noise   & 30.2\%    & 50.0\%      & 50.0\%    & 49.5\%  \\
     	\hline
     \end{tabular}}
     \label{tab:cifar_100}
 \end{table}
 
+Figure~\ref{fig:sample_results_cifar100} shows samples segmentation the 1$^{st}$, 2$^{nd}$, 3$^{rd}$, 4$^{th}$, 5$^{th}$, 6$^{th}$ and 7$^{th}$ columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. We observe that CESN is able to capture spatial properter of the LS segmentation, however, but seems to be struggling to capture the temporal evolution this is seen by the checkerbox structures in Figure~\ref{fig:sample_results_cifar100}, since the LS is initialized as checkerbox. 
 
-Figure~\ref{fig:sample_results_cifar100} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the time evolution of the LS, this seen from the cheakerbox like structures, which are present in the earlier time steps of the LS. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented. The CRNN, CLSTM, CGRU as seen in the images are able to capture the temporal evolution of the LS.
+The CRNN, CLSTM , CGRU and 3DCNN are able to capture the boundaries especially non-overlapping objects, but due to over-segmentation as seen from a larger recall than precision in Table~\ref{tab:bsd500}, the boundaries are not well-defined, this could be due to that the training was stopped prematurely.
+
+% Figure~\ref{fig:sample_results_cifar100} shows samples segmentation, first, second, third, fourth, fifth, sixth and seventh columns are the input images, ground-truth (i.e. LS), CESN, CRNN, CLSTM, CGRU and 3DCNN, respectively. The CESN is unable to capture the time evolution of the LS, this seen from the cheakerbox like structures, which are present in the earlier time steps of the LS. The CRNN, CLSTM, 3DCNN and CGRU are able to capture the boundaries for non overlapping objects, however, suffer from over-segmentation, and they are able to segment, and the segmentation boundaries are over-segmented. The CRNN, CLSTM, CGRU as seen in the images are able to capture the temporal evolution of the LS.
 
 \begin{figure}[H]
 \centering
@@ -2154,11 +2277,17 @@ Figure~\ref{fig:sample_results_cifar100} shows samples segmentation, first, seco
 
 \subsubsection{Conclusion}
  
+ The CGRU outperforms the 3DCNN, CLSTM and CRNN. The additional data samples improved the CGRU, 3DCNN, CLSTM and CESN segmentation resutls when compared to the previous two experiment in Section~\ref{sec:BSD} and ~\ref{sec:Weizmann}. In twist of events, the CESN performed better than the CRNN on the validation than testing set. The CESN segmentation results are better in comparison to all the previous experiments, although not optimal, this validates that the reservoir is task specific and requires domain expertise to find optimal parameters~\cite{jaeger2002tutorial,lukovsevivcius2009reservoir}. The CESN although is a efficient alternative to training RNNs, however, optimal performance is not guaranteed due to the number of hyperprameters that need to be optimized and therefore does perform better than state-of-the-art RNNs under the conditions of this experiment.
 
 \subsection{Reservoir Dynamics}
-In order to successfully model a task using echo state networks, it crucial to understand the dynamics of the reservoir. As recommended in Jaeger et al (2003) ~\citep{jaeger2002tutorial}, that one should plot the internal dynamics if they want to understand the learning process. The performance of the reservoir is dependent on the setting of the parameters discussed in Section~\ref{sec:Dynamics_and_reservoir_characteristic}, for tasks that are non-linear the reservoir has to be also non-linear, and if the task requires to long-term or short-term memory the reservoir should be set a such. 
+\label{sec:reservoir_dynamics}
 
-In Figure~\ref{fig:input_activity}, ~\ref{fig:reservoir_activity} and ~\ref{fig:readout_activity} we inspect the internal dynamics of ${\mathbf{\Theta}}^{in}$, ${\mathbf{\Theta}}$ and ${\mathbf{\Theta}}^{out}$ for each  experiment, respectively.  The please note that the figures are centered around zero,  in order to interpret dynamics.
+\subsubsection{Introduction}
+
+In order to successfully model a task using ESN, it crucial to understand the dynamics of the reservoir. As recommended in Jaeger et al (2003) ~\citep{jaeger2002tutorial}, that one should plot the internal dynamics if they want to understand the learning processes in ESN. The performance of the reservoir is highly dependent on the setting of the parameters discussed in detail in Section~\ref{sec:Dynamics_and_reservoir_characteristic}, for tasks that are non-linear the reservoir has to be also non-linear, and if the task requires to long-term or short-term memory the reservoir should be set a such. 
+\subsubsection{Results And Discussion}
+
+In Figure~\ref{fig:input_activity}, ~\ref{fig:reservoir_activity} and ~\ref{fig:readout_activity} we inspect the internal dynamics of ${\mathbf{\Theta}}^{in}$, ${\mathbf{\Theta}}$ and ${\mathbf{\Theta}}^{out}$, the input, reservoir and readout weights for each experiment, respectively. Please note that the figures are centered around zero,  in order to interpret dynamics.
 
 
 
@@ -2169,7 +2298,7 @@ In Figure~\ref{fig:input_activity}, ~\ref{fig:reservoir_activity} and ~\ref{fig:
  \label{fig:input_activity}
 \end{figure}
 
-Even thought inputs weight matrix ${\mathbf{\Theta}}^{in}$ are not trained, their configuration is important. Figure~\ref{fig:input_activity}, shows that the magnitude of the elements in ${\mathbf{\Theta}}^{in}$ are large, which means the reservoir dynamics are strongly driven by the inputs signal $\mathbf{u}(n)$ and also the reservoir neurons operate near the saturation point of $tanh$, this results in nonlinear dynamics of the model. This properties are required to have a robust model and they are observed for the experiments performed.
+Even though the inputs weight matrix ${\mathbf{\Theta}}^{in}$ are not trained, their configuration is important. Figure~\ref{fig:input_activity}, shows that the magnitude of the elements in ${\mathbf{\Theta}}^{in}$ are large, which means the reservoir dynamics are strongly driven by the inputs signal $\mathbf{u}(n)$ and also the reservoir neurons operate near the saturation point of $tanh$, this results in nonlinear dynamics of the model. This properties are required to have an excitable reservoir driven by the inputs~\cite{jaeger2007optimization}.
 
 
 \begin{figure}[H]
@@ -2179,11 +2308,11 @@ Even thought inputs weight matrix ${\mathbf{\Theta}}^{in}$ are not trained, thei
  \label{fig:reservoir_activity}
 \end{figure}
 
-In Figure~\ref{fig:readout_activity}, we have a reservoir with 4096 neurons with a sparsity of 80\%, which mean 20\% of the neurons in  ${\mathbf{\Theta}}$ are non-null elements. The non-null elements are samples from a uniform distribution over [-1,1] and the ${\mathbf{\Theta}}$ was scaled with a spectral radius of 1, 0.9, 0.9 and 0.8 for the Weizamman, BSD, CIFAR-10 and CIFAR-100 experiments respectively, as described in Section~\ref{sec:Dynamics_and_reservoir_characteristic}.  The reservoir dynamics for Weizamman and BSD experiment exhibit similar characteristics even though scaled with different spectral radius, as well as CIFAR-10 and CIFAR-100. 
+In Figure~\ref{fig:reservoir_activity}, we have a reservoir with 4096 neurons with a sparsity of 80\%, which mean 20\% of the neurons in  ${\mathbf{\Theta}}$ are non-null elements. The non-null elements are samples from a uniform distribution over [-1,1] and the ${\mathbf{\Theta}}$ was scaled with a spectral radius of 1, 0.9, 0.9 and 0.8 for the Weizamman, BSD, CIFAR-10 and CIFAR-100 experiments respectively, as described in Section~\ref{sec:Dynamics_and_reservoir_characteristic}.  The reservoir dynamics for Weizamman and BSD experiment exhibit similar characteristics even though scaled with different spectral radius, as well as CIFAR-10 and CIFAR-100. 
 
 Weizamann and BSD have dynamics operating ${\mathbf{\Theta}} \in(0.1, 0.1)$ which means the reservoir is driven by almost similar inputs signals $\mathbf{u}(n)$, which validates that is less variation in the dataset due to the small sampled size (training, validation and testing sets). 
 
-The the CIFAR-10 and CIFAR-100 dynamics operate near the saturation region of $tanh$  ${\mathbf{\Theta}} \in(0.8, 0.8)$. This is due to the fact that both set used a larger sampled size, thus more variation in the dataset. Then is it required that the reservoir has more rich dynamics, however the inputs signals $\mathbf{u}(n)$ have a larger impact with respect to reservoir size and results in poor performance.
+The the CIFAR-10 and CIFAR-100 dynamics operate near the saturation region of $tanh$  ${\mathbf{\Theta}} \in(0.8, 0.8)$. This is due to the fact that both set used a larger sampled size, thus more variation in the dataset. Then is it required that the reservoir has more rich dynamics, however the inputs signals $\mathbf{u}(n)$ have a larger impact with respect to reservoir size and results in optimal performance~\cite{jaeger2002tutorial}
 
 \begin{figure}[H]
 \centering
@@ -2193,15 +2322,23 @@ The the CIFAR-10 and CIFAR-100 dynamics operate near the saturation region of $t
 \end{figure}
 
 
-In Figure~\ref{fig:readout_activity}, the elements in ${\mathbf{\Theta}}^{out}$ are small values, which implies the reservoir has sufficient capacity for the given task in each experiment, as described in Jaeger et al (2003) ~\citep{jaeger2002tutorial}. We can conclude that CV evolution problem is a short-term memory  tasks, because the general rule for short-term memory (i.e. fast) spectral radius should be small and for long-term memory (i.e. slow) the spectral radius should be large. 
+In Figure~\ref{fig:readout_activity}, the elements in ${\mathbf{\Theta}}^{out}$ are small values, which implies the reservoir has sufficient capacity for the given task in each experiment, as described in Jaeger et al (2003) ~\citep{jaeger2002tutorial}. 
 
 \subsubsection{Conclusion}
-In order to understand  the inner workings of the ESN, we have to look at the dynamics of the reservoir. However, optimizing a reservoir with optimal performance becomes difficult due the number of parameters that drive the reservoir.
 
-% \newpage
-\subsection{ESN Global Parameter Optimization}
-In order to determine the relationship  between the memory of the reservoir and the  reservoir configuration.  We have a look at how the main global parameters parameters described in Section~\ref{sec:Global_parameters_of_the_reservoir} and how they impact the performance of the CESN in learning the LS. For each set of the global parameters, we used the a reservoir size of 4096, spectral radius 0.9, sparsity 0.8 and leaking rate of 0.0098, when optimizing one of each parameter on the CIFAR-100 database. A total of 100 epochs are used with a decaying learning rate for each search.
 
+We can conclude that LS evolution problem is treated as a short-term memory problem by the CESN, because the general rule for short-term memory (i.e. fast) spectral radius should be small and for long-term memory (i.e. slow) the spectral radius should be large.  However, optimizing a reservoir with optimal performance becomes difficult due the number of parameters that drive the reservoir, and in most cases requires domain expertise.
+\newpage
+\subsection{CESN Global Parameter Optimization}
+\label{sec:esn_global_parameter_optimization}
+
+\subsubsection{Introduction}
+
+
+In order to determine the relationship  between the memory of the reservoir and the  reservoir configuration.  We have a look at how the main global parameters parameters described in Section~\ref{sec:Global_parameters_of_the_reservoir} and how they impact the performance of the CESN in learning the evolution of the LS. For each set of the global parameters, we used the a reservoir size of 4096, spectral radius 0.9, sparsity 0.8 and leaking rate of 0.0098, when optimizing one of each parameter on the CIFAR-100 database. A total of 100 epochs are used with a decaying learning rate for each search.
+
+\subsubsection{Results And Discussion}
+% we explore leaking rate of above 1 beacuse it not a nessary condition [citation].....
 
 In Figure~\ref{fig:esn_optimization} shows the relationship of the reservoir size, sparsity, leaking rate and spectral radius reservoir and performance in of the CESN in learning the LS.  Firstly, lets look at the reservoir size, increasing the reservoir size the recall, precision and $F_{1}Score$ increases, this is observations are expected, since the reservoir size is related to the capacity of the entire network to learn the LS, however small improvement in the performance are observed, this is likely due to the fact that optimization of larger reservoirs is difficult as pointed out by Jaeger at el, 2009~\cite{jaeger2002tutorial}. Secondly, lets look at the sparsity of the reservoir, although increasing the sparsity of the reservoir enable us to use larger reservoir sizes without incurring a high computational cost. Under the merit of this experiment increasing the sparsity of the reservoir results in a decrease in both the IoU and $F_{1}Score$, we suspect that, for more complex input images, a more powerful (and possibly more sophisticated) architecture would be required to match performance. 
 
@@ -2214,8 +2351,6 @@ In Figure~\ref{fig:esn_optimization} shows the relationship of the reservoir siz
 \end{figure}
 Thirdly, lets look at the leaking rate, increasing the leaking rate results in a increase in both the IoU and $F_{1}Score$, this suggest and validates, that the LS is a short-term memory problem, because high leaking rates are associated with problems that require less memory. This make sense, since the current segmentation only depends on the previous state of the segmentation from the LS. 
 And lastly, we look at the spectral radius, increasing the spectral radius results in a slight decrease in the IoU and $F_{1}Score$, this further validates the the LS is a short-term memory problem.
-
-\subsubsection{Discussion}
 
 In order to have non-chaotic reservoir we need to establish the echo state property is satisfied mentioned in Section~\ref{sec:echo_state_property_and_spectral_radius}. Increasing the reservoir size does improve the models performance, this is related to the capacity of the model, having a sparsity of 80\% does results in fast updated of the reservoir which are computationally cheap, however, this reduces the capacity of the reservoir, this mostly likely due to the fact that the LS is a exhibit global characteristics when determining the evolving the segmentation curve. The memory of the reservoir, or rather short-term and long-term memory, are controlled by the leaking rate and spectral radius, these parameters should be the center of attention when constructing an optimal reservoir, especially the spetral radius, since determine whether the reservoir has an echo state property.
 
@@ -2230,6 +2365,9 @@ The training episodes are relatively fast and computationally cheap compared to 
 
 \section{Conclusion and Future Work}
 \label{sec:Discussion_and_Conclusion}
+
+In this dissertation 
+This thesis proposed formulating traditional image segmentation PDE approached called levelset using deep learning-based approaches. A comparative study was conducted to determine a computationally cheap and state of the art a deep learning-based approach. The study was conducted on 2 small database the WSD and BSD and large databases CIFAR-100 and CIFAR-10.
 % However, the complexity of LSTMs demands an excessive amount of computing time, making it difficult to achieve optimal performance. On the other hand, the simplicity of the ESNs can limit their generalization capabilities.
 
 % Due to the high dimensionality of the reservoir, the numberof  parameters  of  the  prediction  model  in  (8)  would  growtoo  large,  making  the  proposed  representation  intractable.Drawbacks  in  using  large  representations  include  overfittingand  the  high  amount  of  computational  resources  to  evaluatethe  ridge  regression  solution  for  each  MTS.  In  the  contextof  RC,  applying  PCA  to  reduce  dimensionality  of  the  lastreservoir  state  has  shown  to  improve  performance  achievedon  the  inference  task  [35].  Compared  to  non-linear  methodsfor  dimensionality  reduction  such  as  kernel-PCA  or  autoen-coders  [36],  PCA  provides  competitive  generalization  capa-bilities when combined with RC models and can be computedquickly, thanks to its linear formulation 

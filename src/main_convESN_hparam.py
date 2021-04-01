@@ -141,13 +141,46 @@ if __name__=="__main__":
     loss_function = weighted_binary_cross_entropy
 
     if args.state=='hidden':
-        params = np.array([128, 256, 512, 1024, 2048, 4096])
+        params = np.array([16, 32, 64, 128, 256, 512, 1024, 2048, 4096])
     if args.state=='leakrate':
-        params = np.array([1.9, 1, 0.95, 0.35, 0.0915, 0.001795])
+        params = np.array([1, 0.95313, 0.65123, 0.45313, 0.2542142, 0.014124, 0.0915214, 0.009795214, 0.0009213424])
     if args.state=='spectralradius':
-        params = np.array([1, 0.95, 0.65, 0.45, 0.25, 0.09])
+        params = np.array([5,1.5, 0.95, 0.65, 0.45, 0.5 , 0.25, 0.0123213, 0.092313, 0.001313, 0.0001331313])
     if args.state=='sparsity':
-        params = np.array([1, 0.8, 0.6, 0.4, 0.2])
+        params = np.array([1, 0.98, 0.8, 0.6, 0.4, 0.2, 0.1, 0.05, 0])
+
+    # early_stopping = EarlyStopping(name=run_path,patience=10, verbose=True)  
+    # to track the training loss as the model trains
+    train_running_loss     = []
+    # to track the validation loss as the model trains
+    valid_running_loss     = []
+    # to track the average training loss per epoch as the model trains
+    train_epoch_loss       = []
+    # to track the average validation loss per epoch as the model trains
+    valid_epoch_loss       = [] 
+    # to track the validation dice as the model trains
+    valid_running_dice     = []
+    # to track the validation accuracy as the model trains
+    valid_running_accuracy = []
+    # to track the validation precision as the model trains
+    valid_running_precision = []
+    # to track the validation recall as the model trains
+    valid_running_recall   = []
+    # to track the average validation dice per epoch as the model trains
+    valid_epoch_dice       = []
+    # to track the average validation accuracy per epoch as the model trains
+    valid_epoch_accuracy   = []
+    # to track the average validation precision per epoch as the model trains
+    valid_epoch_precision   = []
+    # to track the average validation recall per epoch as the model trains
+    valid_epoch_recall      = []
+    # to track the state of the parameter
+    param_state             = []
+    # capture the time to start training
+    epoch_start_time = time.time()
+    best_valid_iou   = -np.inf
+    best_valid_epoch = 0
+    epoch_buffer     = 2
 
     for param in params:
         if args.state=='hidden':
@@ -214,42 +247,6 @@ if __name__=="__main__":
         # learning rate schedular
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=int(args.num_epochs/5), gamma=0.1)
 
-
-
-        # early_stopping = EarlyStopping(name=run_path,patience=10, verbose=True)  
-        logger.info("Training starting........")
-
-        # to track the training loss as the model trains
-        train_running_loss     = []
-        # to track the validation loss as the model trains
-        valid_running_loss     = []
-        # to track the average training loss per epoch as the model trains
-        train_epoch_loss       = []
-        # to track the average validation loss per epoch as the model trains
-        valid_epoch_loss       = [] 
-        # to track the validation dice as the model trains
-        valid_running_dice     = []
-        # to track the validation accuracy as the model trains
-        valid_running_accuracy = []
-        # to track the validation precision as the model trains
-        valid_running_precision = []
-        # to track the validation recall as the model trains
-        valid_running_recall   = []
-        # to track the average validation dice per epoch as the model trains
-        valid_epoch_dice       = []
-        # to track the average validation accuracy per epoch as the model trains
-        valid_epoch_accuracy   = []
-        # to track the average validation precision per epoch as the model trains
-        valid_epoch_precision   = []
-        # to track the average validation recall per epoch as the model trains
-        valid_epoch_recall      = []
-        # to track the state of the parameter
-        param_state             = []
-        # capture the time to start training
-        epoch_start_time = time.time()
-        best_valid_iou   = -np.inf
-        best_valid_epoch = 0
-        epoch_buffer     = 2
         try:
             for epoch in np.arange(1, args.num_epochs):
                 early_stopping = EarlyStopping(name=args.run_name,patience=50, verbose=True)    
@@ -285,7 +282,7 @@ if __name__=="__main__":
                     del inputs, labels, outputs 
                     torch.cuda.empty_cache()
 
-                scheduler.step() 
+                # scheduler.step() 
 
                 model.eval()
                 with torch.no_grad(): # do not calculate gradient and save memory usage
@@ -336,7 +333,7 @@ if __name__=="__main__":
                     best_valid_iou = valid_epoch_dice[-1]
                     best_valid_epoch = epoch
 
-            msg ='State: {}, Param: {:04d}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
+            msg ='{}: {}, Training Loss: {:2.3f}, Validation Loss: {:2.3f}, Validation precision: {:2.3f}, Validation recall: {:2.3f}, Validation f1 score: {:2.3f}, Validation IoU: {:2.3f},  LR: {:2.6f}  [Time_taken: {:2.3f}s]'.format(                
             args.state, param, train_epoch_loss[-1], valid_epoch_loss[-1],  valid_epoch_precision[-1], valid_epoch_recall[-1], 
             valid_epoch_accuracy[-1], valid_epoch_dice[-1], scheduler.get_last_lr()[0], time.time()-epoch_start_time)
             
@@ -352,24 +349,20 @@ if __name__=="__main__":
         logger.info(f"Total training time: {(time.time()-epoch_start_time)/60:4.4f} minutues")
         logger.info(f"Best Validation IOU = {best_valid_iou} (at epooch {best_valid_epoch})")
 
-        # save train and valid
-        results_path = os.path.join(args.save_path, args.run_name, "results")
-        os.makedirs(results_path, exist_ok=True)
+    # save train and valid
+    results_path = os.path.join(args.save_path, args.run_name, "results")
+    os.makedirs(results_path, exist_ok=True)
 
-        print(valid_epoch_loss)
-        print(param_state)
-        print(len(valid_epoch_loss), len(param_state))
+    train_valid_results_df = pd.DataFrame({'train_loss':[x for x in train_epoch_loss],
+    'valid_loss': [x for x in valid_epoch_loss],
+    'valid_iou': [ x for x in valid_epoch_dice],
+    'valid_f1score': [x for x in valid_epoch_accuracy],
+    'Valid_precision': [x for x in valid_epoch_precision],
+    'Valid_recall': [x for x in valid_epoch_recall],
+    args.state: [x for x in param_state]}
+    )
 
-        train_valid_results_df = pd.DataFrame({'train_loss':[x for x in train_epoch_loss],
-        'valid_loss': [x for x in valid_epoch_loss],
-        'valid_iou': [x for x in valid_epoch_dice],
-        'valid_f1score': [x for x in valid_epoch_accuracy],
-        'Valid_precision': [x for x in valid_epoch_precision],
-        'Valid_recall': [x for x in valid_epoch_recall],
-        args.state: [x for x in param_state]}
-        )
-
-        train_valid_results_df.to_csv(os.path.join(results_path,f"train_valid_{args.state}.csv"), index_label="epoch", float_format='%.4f')
+    train_valid_results_df.to_csv(os.path.join(results_path,f"train_valid_{args.state}.csv"), index_label="epoch", float_format='%.4f')
 
             # create empty dataframe 
             # test_df = pd.DataFrame(columns=['iou', 'f1score', 'precision', 'recall'])

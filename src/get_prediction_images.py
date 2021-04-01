@@ -206,6 +206,7 @@ if __name__=="__main__":
 
             logger.info(f"Loading model for testing.....")
             model.load_state_dict(torch.load(model_fp))
+            best_iou   = -np.inf
 
             model.eval()
             for batch_idx, (inputs, labels, names) in enumerate(ls_eval_ds):
@@ -229,20 +230,32 @@ if __name__=="__main__":
                 # for t in np.arange(inputs.shape[2], 10):
                 #     label = labels[:, :, t]
                 #     output = outputs[:, :, t]
+              
+
+                    # compute the metrics
+                    # print(outputs.shape, labels.shape)
+                # outputs = (outputs >= args.threshold)*1
+                # f1, precision, recall  = pixel_segementation_evaluation(labels.cpu().detach().numpy().reshape(-1),
+                # outputs.cpu().detach().numpy().reshape(-1))
+                # iou     =  iou_pytorch(outputs, labels)
+                # iou = iou.detach().item()
+
+                    
+                # if iou>best_iou:
+                #     best_iou = iou
+
                 t=81
                 cp=model_fp.split('/')[-3]
                 logger.info(f"save cp: {cp}")
                 save_path  = f'/home-mscluster/tmashinini/MSC/Data/processed_data/{ds}/results/{cp}/predictions/'
                 logger.info(f"save path: {save_path}")
-
                 os.makedirs(save_path, exist_ok=True)
+                n = names[0].split('_')[0]
+                plt.imsave(os.path.join(save_path,f'{n}_input.png'), inputs.detach().cpu().numpy()[0,0,0] )
+                plt.imsave(os.path.join(save_path,f'{names[0]}_label_{t}.png'), labels.detach().cpu().numpy()[0] )
+                plt.imsave(os.path.join(save_path,f'{names[0]}_output_{t}.png'), outputs.detach().cpu().numpy()[0])
 
-                
-                plt.imsave(os.path.join(save_path,f'input.png'), inputs.detach().cpu().numpy()[0,0,0] )
-                plt.imsave(os.path.join(save_path,f'label_{t}.png'), labels.detach().cpu().numpy()[0] )
-                plt.imsave(os.path.join(save_path,f'output_{t}.png'), outputs.detach().cpu().numpy()[0] )
-
-                break
-
+                # if batch_idx==5:
+                #     break
 
         logger.info(f'========= DONE ========')
