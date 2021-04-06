@@ -1,2 +1,0 @@
-epoch,train_loss,valid_loss,valid_iou,valid_f1score,Valid_precision,Valid_recall,hidden
-0,7.3431,7.6272,0.2150,0.4898,0.5445,0.5300,4096
