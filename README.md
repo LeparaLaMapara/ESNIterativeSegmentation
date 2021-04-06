@@ -10,6 +10,7 @@
     ├── notebooks              # Notebooks used to generated the resutls for the thesis
     ├── saved_models           # Samples predicted images  
     └── README.md
+    └── environment_msc.yml    # Conda Enviroment dependencies
 
 ### Introduction
 
