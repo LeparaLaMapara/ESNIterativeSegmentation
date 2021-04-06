@@ -52,7 +52,6 @@ class LevelSetDataset(Dataset):
         print('leng', len(self.input_image_fp))
         print()
         if len(self.input_image_fp)>10000:
-
             n=10000
         else:
             n=len(self.input_image_fp)
