@@ -2,7 +2,8 @@
 > Learning Level Set Method by Echo State Network for Image Segmentation
 ============================
 ### This repos in arranged as follows:
-.
+    .
+    ├── ...
     ├── bash                   # bash scripts used to move and renames the data files
     ├── matlab                 # Matlab scripts used to generate the data
     ├── src                    # Source files (i.e. files for models, dataloader..etc)
