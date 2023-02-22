@@ -18,4 +18,7 @@
 
 ### Notes
 
-Link to the publication will be added here.
+## Link to the publication will be added here.
+
+- [MSC Dissertation](https://wiredspace.wits.ac.za/items/2c23f3d9-05fd-410e-ad52-31ecffbbf643/full)
+- [Publications](https://scholar.google.com/citations?user=aLjffFkAAAAJ&hl=en)
